@@ -25,7 +25,7 @@ track.
 | 0 | Prerequisites (accounts, MCP servers, backend projects) | ✅ Done (Apple / Play Console pending) |
 | 1 | Foundation | ✅ Done on Android (iPhone waits for the Apple account) |
 | 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
-| 3 | Full audio | 🔨 MVP items built; awaiting device checks |
+| 3 | Full audio | ✅ MVP items done on Android (deferred items listed under "After the MVP") |
 | 4 | Ebooks | ⬜ Not started |
 | 5 | Sync | ⬜ Not started |
 | 6 | Analytics, polish, release prep | ⬜ Not started |
@@ -42,7 +42,7 @@ track.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/33196960-f963-4a0f-a70e-697360ff4b42 (`c235a13`) |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/d60b3c42-624c-4ed5-925f-035170694a67 (`b4ea252`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -142,7 +142,7 @@ library if any fail:
 - [x] Large file (500 MB M4B) imports with visible progress and without freezing
 - [ ] Sleep timer under lock: moved to milestone 3 together with the sleep timer itself
 
-## Milestone 3: Full audio 🔨
+## Milestone 3: Full audio ✅
 
 Pulled forward after testing a 40-file MP3 book (2026-10-09):
 - [x] Tag reader in TypeScript, no dependency (`src/features/import/tags`): ID3v2.2–2.4 + ID3v1
@@ -181,11 +181,12 @@ Still to do for the MVP:
       Delete removes the rows entirely for now; milestone 5 decides how a deleted book appears
       once sync knows about it (spec: delete is per device, "Remove from all devices" is separate)
 - [x] Device check (build 33196960): Continue card, sort, filter, rename, finished / start again
-- [ ] Delete a book while it's in the mini-player: failed on dc8c7d5c (book left the library and
+- [x] Delete a book while it's in the mini-player: failed on dc8c7d5c (book left the library and
       the mini-player closed, but audio kept playing with no controls). expo-audio's remove() only
       drops its registry entry; the native player stops on release(), which otherwise waits for
-      garbage collection. unload() now pauses and releases. Re-check, also switching books and
-      signing out while playing
+      garbage collection. unload() now pauses and releases. Verified on d60b3c42, along with
+      switching books and signing out while playing (opening another book's player stops the
+      current one: one book is loaded at a time)
 
 ## Milestone 4: Ebooks ⬜
 
