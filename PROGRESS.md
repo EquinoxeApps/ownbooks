@@ -13,7 +13,7 @@ next one starts.
 |---|---|---|
 | 0 | Prerequisites (accounts, MCP servers, backend projects) | ✅ Done (Apple / Play Console pending) |
 | 1 | Foundation | ✅ Done on Android (iPhone waits for the Apple account) |
-| 2 | Single-file audio + audio risk spike | 🔨 Built, awaiting device checks |
+| 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
 | 3 | Full audio | 🔨 Partly done (tags, covers, chapters pulled forward) |
 | 4 | Ebooks | ⬜ Not started |
 | 5 | Sync | ⬜ Not started |
@@ -31,7 +31,7 @@ next one starts.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/63590f53-1e39-4c40-9cbb-9b984cbc1259 (`78fbaee`) |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/4af6d2f1-69f9-4303-9891-2433309dc93a (`1d83fb3`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -69,7 +69,7 @@ Verified on device (Android, build 63590f53, 2026-10-16):
 Still open:
 - [ ] iPhone build: blocked on the Apple Developer account
 
-## Milestone 2: Single-file audio + risk spike 🔨
+## Milestone 2: Single-file audio + risk spike ✅
 
 Done (code, tests green):
 - [x] Import via `expo-document-picker` (multi-select). Files are copied with the native
@@ -114,19 +114,19 @@ Audio findings (expo-audio 57):
 - Lock-screen artwork: the cover from the file's tags (a `file://` URL; expo-audio loads it on both
   platforms). Books without cover art show none, because generated covers aren't images.
 
-Device checks (spec §6.1), first run on build 63590f53 (2026-10-16). Stop and reassess the audio
+Device checks (spec §6.1), run on builds 63590f53 and 4af6d2f1 (2026-10-16). Stop and reassess the audio
 library if any fail:
 - [x] Position writes keep working with the screen locked for 30+ min
-- [ ] Lock screen shows skip buttons (not previous/next track). They jumped 10 s (patch not
-      compiled in, see findings), the book title was missing, and a book without a cover showed
-      the previous book's cover. Fixed in code (now −30/+30); re-check on the next build
+- [x] Lock screen shows skip buttons (not previous/next track). On 63590f53 they jumped 10 s
+      (patch not compiled in, see findings), the book title was missing, and a book without a
+      cover showed the previous book's cover. All fixed and verified on 4af6d2f1: 30 s icons and
+      jumps, book title then chapter, no stale cover
 - [x] Multi-file book plays across file boundaries without an audible gap or stall
 - [x] Resumes correctly after a phone call (a vibrate-only ring doesn't pause; see findings)
-- [ ] Pauses on Bluetooth disconnect / unplugged headphones: **failed**. Unplugging USB-C
-      earphones kept playing on the speaker (cause: the noisy handling in our patch was never
-      compiled in; fixed). Taking an earbud out paused correctly. Once, turning a paused
-      Bluetooth headset off resumed on the speaker; a retest with the log running didn't
-      reproduce it. Re-check both on the next build
+- [x] Pauses on Bluetooth disconnect / unplugged headphones. On 63590f53, unplugging USB-C
+      earphones kept playing on the speaker (the noisy handling in our patch was never compiled
+      in). Verified on 4af6d2f1: unplugging pauses; Bluetooth headset off pauses while playing
+      and stays paused when already paused
 - [x] Force-quit during playback loses ≤ 5 s; reboot resumes at the saved position
 - [x] Large file (500 MB M4B) imports with visible progress and without freezing
 - [ ] Sleep timer under lock: moved to milestone 3 together with the sleep timer itself
