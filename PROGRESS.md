@@ -7,6 +7,17 @@ interview decisions in the build plan (summarised in "Decisions" below).
 Each milestone ends with a build running on a real device and a review before the
 next one starts.
 
+## MVP scope (decided 2026-10-16)
+
+The MVP delivers the whole product promise: import, play **and read** your own DRM-free
+audiobooks and ebooks, with progress synced across devices. It is the spec's v1 minus the
+items under "After the MVP" below. iPhone is out of scope for the MVP (blocked on the Apple
+account) but stays required before an App Store release.
+
+**Done when:** every acceptance criterion in spec §8 passes on Android and is recorded here, the
+store requirements in Milestone 6 are met, and the app is live in a Google Play closed testing
+track.
+
 ## Status at a glance
 
 | # | Milestone | Status |
@@ -152,12 +163,11 @@ Pulled forward after testing a 40-file MP3 book (2026-10-09):
 - [x] Device checks: the 40-file book renames itself and lists its tracks; the 460 MB M4B
       shows its chapters and cover; lock-screen artwork and chapter name
 
-Still to do:
-- [ ] Review step for mixed selections (reorder / split / merge)
-- [ ] Grouping rule: mixed selection → review
-- [ ] Speed sheet 0.5–3.0× (stored per book already), sleep timer (durations + end of chapter), configurable skip intervals
-- [ ] Library: Continue card, sort sheet, filters, book detail (edit / delete / mark as finished)
-- [ ] Local listening activity (daily seconds)
+Still to do for the MVP:
+- [ ] Speed sheet 0.5–3.0× (stored per book already)
+- [ ] Sleep timer (durations + end of chapter), verified with the screen locked (last §6.1 check)
+- [ ] Library: Continue card, sort sheet (recent / title / author / date added), filter All / Audio / Ebooks
+- [ ] Book detail: edit title/author, delete with confirmation, mark as finished
 
 ## Milestone 4: Ebooks ⬜
 
@@ -166,18 +176,18 @@ Still to do:
 - [ ] Reader: paginated, tap/swipe, themes light/sepia/dark (follow system), text size,
       line spacing, margins, Literata + publisher-font toggle
 - [ ] TOC, CFI persistence, font-size change keeps the passage, link handling (confirm external)
-- [ ] Local reading activity (2-minute idle cut-off)
+- [ ] EPUB fingerprint at import; remove the "Ebooks arrive in the next update" import error
 
 ## Milestone 5: Sync ⬜
 
-- [ ] Fingerprints (SHA-256 of size + first 1 MB + last 1 MB; multi-file = hash of track hashes)
+- [x] Fingerprints (SHA-256 of size + first 1 MB + last 1 MB; multi-file = hash of track hashes):
+      computed at audio import since milestone 2
 - [ ] Sync engine: device upsert, push dirty rows / pending ops, pull since cursor, last write wins
 - [ ] Triggers: foreground, book open/close, pause, ~60 s during playback, reconnect
 - [ ] "Not on this device" placeholders + adoption on import
 - [ ] Conflict sheet ("You're further ahead on your iPad")
 - [ ] Remove from all devices (tombstone)
-- [ ] Activity tab (this week, listening vs reading, books finished, days with books) + History
-- [ ] Profile: Your devices + "In sync"
+- [ ] Profile: "In sync" status
 - [ ] Delete account: Edge Function + in-app confirmation + web deletion page
 
 ## Milestone 6: Analytics, polish, release prep ⬜
@@ -187,10 +197,23 @@ Still to do:
 - [ ] Event wrapper that rejects any book data; events from the spec + onboarding property
 - [ ] Storage screen (per book + total)
 - [ ] Empty and error states, accessibility pass (VoiceOver / TalkBack)
-- [ ] Maestro flows
 - [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page
-- [ ] Store listings, privacy labels (email, usage data, diagnostics)
+- [ ] Production email sender in Supabase (e.g. Resend)
 - [ ] Final bundle ID and legal entity; Google OAuth consent screen → In production
+- [ ] Play Console: store listing, data-safety form (email, usage data, diagnostics), closed testing
+      track. New personal developer accounts need a closed test with 12+ testers for 14 days
+      before production access
+
+## After the MVP
+
+Deferred on 2026-10-16 to reach the MVP sooner:
+- Review step for mixed selections (reorder / split / merge); automatic grouping stays
+- Configurable skip intervals (fixed at −30 / +30 for now)
+- Listening and reading activity: local daily totals (2-minute idle cut-off for reading), the
+  Activity tab (this week, listening vs reading, books finished, days with books) and History
+- Profile: "Your devices" list
+- Maestro end-to-end flows (manual device checklists per milestone until then)
+- iPhone build, Sign in with Apple and the App Store listing (needs the Apple Developer account)
 
 ## Open items / waiting on
 
