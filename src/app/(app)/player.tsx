@@ -18,8 +18,8 @@ import { formatClock, formatRemaining } from '@/lib/time';
 import { Icon, IconButton, Text } from '@/ui';
 import { fonts, playerColors } from '@/ui/tokens';
 
-const SKIP_BACK_MS = 15_000;
-const SKIP_FORWARD_MS = 30_000;
+// Matches the lock-screen buttons (patches/expo-audio+57.0.5.patch).
+const SKIP_MS = 30_000;
 
 export default function Player() {
   const { t } = useTranslation();
@@ -127,7 +127,7 @@ export default function Player() {
         ) : (
           <View style={styles.spacer} />
         )}
-        <RoundSkip label={'−15'} a11y={t('player.skipBack', { seconds: 15 })} onPress={() => skipBy(-SKIP_BACK_MS)} />
+        <RoundSkip label={'−30'} a11y={t('player.skipBack', { seconds: 30 })} onPress={() => skipBy(-SKIP_MS)} />
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={s.playing ? t('player.pause') : t('player.play')}
@@ -139,7 +139,7 @@ export default function Player() {
             </View>
           )}
         </Pressable>
-        <RoundSkip label="+30" a11y={t('player.skipForward', { seconds: 30 })} onPress={() => skipBy(SKIP_FORWARD_MS)} />
+        <RoundSkip label="+30" a11y={t('player.skipForward', { seconds: 30 })} onPress={() => skipBy(SKIP_MS)} />
         {multi ? (
           <IconButton
             icon="nextChapter"

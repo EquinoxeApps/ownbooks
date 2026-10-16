@@ -1,6 +1,6 @@
 # OwnBooks: Progress
 
-Last updated: 2026-10-09
+Last updated: 2026-10-16
 
 Source of truth for scope: [`docs/design/spec.md`](docs/design/spec.md), plus the
 interview decisions in the build plan (summarised in "Decisions" below).
@@ -12,7 +12,7 @@ next one starts.
 | # | Milestone | Status |
 |---|---|---|
 | 0 | Prerequisites (accounts, MCP servers, backend projects) | ✅ Done (Apple / Play Console pending) |
-| 1 | Foundation | ✅ Code complete, running on Android; review in progress |
+| 1 | Foundation | ✅ Done on Android (iPhone waits for the Apple account) |
 | 2 | Single-file audio + audio risk spike | 🔨 Built, awaiting device checks |
 | 3 | Full audio | 🔨 Partly done (tags, covers, chapters pulled forward) |
 | 4 | Ebooks | ⬜ Not started |
@@ -31,7 +31,7 @@ next one starts.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/239dee60-4660-4bd2-bc34-8eab20f3725d |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/63590f53-1e39-4c40-9cbb-9b984cbc1259 (`78fbaee`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -59,13 +59,14 @@ Done:
 - Tests: 28 unit tests (node:sqlite), 17 RLS tests in CI.
 - Fixed: launch hang caused by unstable `SQLiteProvider` props in suspense mode.
 
-Verified on device (Android): onboarding, Google sign-in.
+Verified on device (Android, build 63590f53, 2026-10-16):
+- [x] Onboarding, Google sign-in
+- [x] Email code sign-in (6-digit code, resend cooldown, wrong-code error)
+- [x] Profile → sign out → "Welcome back." → sign back in, books still there
+- [x] Offline relaunch (airplane mode) stays signed in
+- [x] Account switch prompt (second account, keep hidden, books return to the first account)
 
-Still to verify in the Milestone 1 review:
-- [ ] Email code sign-in (code arrives as 6 digits, not a link)
-- [ ] Profile → sign out → sign back in
-- [ ] Offline relaunch (airplane mode) stays signed in
-- [ ] Account switch prompt (sign in with a second account)
+Still open:
 - [ ] iPhone build: blocked on the Apple Developer account
 
 ## Milestone 2: Single-file audio + risk spike 🔨
@@ -82,33 +83,52 @@ Done (code, tests green):
 - [x] Player controller: one `AudioPlayer` for every book, multi-file track switching,
       position saved every 5 s and on pause/seek/track change/background/unload,
       restored on reopen, speed remembered per book
-- [x] Player screen as designed (cover, seek bar with screen-reader support, −15/+30, prev/next track)
+- [x] Player screen as designed (cover, seek bar with screen-reader support, −30/+30, prev/next track)
 - [x] Mini-player above the tab bar; library rows open the player
-- [x] Lock screen / notification controls (title, author, track)
+- [x] Lock screen / notification controls (book title, then chapter or author)
 - [x] Playback stops and lock-screen controls clear on sign-out / account switch
 
 Audio findings (expo-audio 57):
 - `AudioPlaylist` has no lock-screen support, and Android stops background audio after ~3 min
   without it, so books use a single `AudioPlayer` and switch files on track end.
 - Lock-screen skip was hardcoded to 10 s and Android didn't pause on unplugged headphones.
-  Fixed with `patches/expo-audio+57.0.5.patch` (patch-package): lock screen −15 s / +30 s
-  on both platforms, `setHandleAudioBecomingNoisy(true)` on Android. **Re-check this patch
-  on every Expo SDK upgrade.** Lock-screen intervals stay fixed even when in-app skip
-  intervals become configurable (milestone 3).
+  Fixed with `patches/expo-audio+57.0.5.patch` (patch-package): lock screen −30 s / +30 s
+  on both platforms (Android icons too: `ICON_SKIP_BACK_30` / `ICON_SKIP_FORWARD_30`),
+  `setHandleAudioBecomingNoisy(true)` on Android, and the Android notification clears the
+  previous book's cover when the next book has none. **Re-check this patch on every Expo SDK
+  upgrade.** Lock-screen intervals stay fixed even when in-app skip intervals become
+  configurable (milestone 3).
+- **Prebuilt Expo modules ignore patches.** Expo ships expo-audio as a precompiled AAR (📦 in the
+  Gradle log), so until 2026-10-16 none of the Android patch was in the app: the lock screen
+  jumped 10 s and unplugging didn't pause (a device log showed the system sending
+  `ACTION_AUDIO_BECOMING_NOISY` and the app ignoring it). `package.json` now sets
+  `expo.autolinking.{android,ios}.buildFromSource: ["expo-audio"]`, and
+  `test/patches.test.ts` fails if any patched package is missing from that list.
+- Android's lock screen shows only title and artist (not album), so the title is the book and
+  the artist is the chapter (or the author when the book has a single chapter).
+- Android doesn't take audio focus for a call that only vibrates, so playback keeps going until
+  the call is answered. Pausing on a silent ring would need the phone-state permission; not done.
 - expo-file-system 57: reading a picked `content://` file through `FileHandle` fails on Android
   with "Bad file descriptor" (the ParcelFileDescriptor is garbage-collected), so imports use the
   native copy instead of chunked JS reads. Worth reporting upstream.
 - Lock-screen artwork: the cover from the file's tags (a `file://` URL; expo-audio loads it on both
   platforms). Books without cover art show none, because generated covers aren't images.
 
-Device checks (spec §6.1). Stop and reassess the audio library if any fail:
-- [ ] Position writes keep working with the screen locked for 30+ min
-- [ ] Lock screen shows −15 / +30 (not previous/next track)
-- [ ] Multi-file book plays across file boundaries without an audible gap or stall
-- [ ] Resumes correctly after a phone call
-- [ ] Pauses on Bluetooth disconnect / unplugged headphones; controllable from a Bluetooth headset
-- [ ] Force-quit during playback loses ≤ 5 s; reboot resumes at the saved position
-- [ ] Large file (500 MB M4B) imports with visible progress and without freezing
+Device checks (spec §6.1), first run on build 63590f53 (2026-10-16). Stop and reassess the audio
+library if any fail:
+- [x] Position writes keep working with the screen locked for 30+ min
+- [ ] Lock screen shows skip buttons (not previous/next track). They jumped 10 s (patch not
+      compiled in, see findings), the book title was missing, and a book without a cover showed
+      the previous book's cover. Fixed in code (now −30/+30); re-check on the next build
+- [x] Multi-file book plays across file boundaries without an audible gap or stall
+- [x] Resumes correctly after a phone call (a vibrate-only ring doesn't pause; see findings)
+- [ ] Pauses on Bluetooth disconnect / unplugged headphones: **failed**. Unplugging USB-C
+      earphones kept playing on the speaker (cause: the noisy handling in our patch was never
+      compiled in; fixed). Taking an earbud out paused correctly. Once, turning a paused
+      Bluetooth headset off resumed on the speaker; a retest with the log running didn't
+      reproduce it. Re-check both on the next build
+- [x] Force-quit during playback loses ≤ 5 s; reboot resumes at the saved position
+- [x] Large file (500 MB M4B) imports with visible progress and without freezing
 - [ ] Sleep timer under lock: moved to milestone 3 together with the sleep timer itself
 
 ## Milestone 3: Full audio 🔨
@@ -129,7 +149,7 @@ Pulled forward after testing a 40-file MP3 book (2026-10-09):
       seek bar spans the current chapter, prev/next chapter, and a Chapters sheet to jump.
 - [x] Existing books are repaired once on launch (migration v2 `tags_read`): cover, chapters and
       track names are added; the title/author change only if they were never edited.
-- [ ] Device checks: the 40-file book renames itself and lists its tracks; the 460 MB M4B
+- [x] Device checks: the 40-file book renames itself and lists its tracks; the 460 MB M4B
       shows its chapters and cover; lock-screen artwork and chapter name
 
 Still to do:
@@ -185,4 +205,5 @@ Synced daily Activity totals (no link to any book) · devices table · light-onl
 chrome (dark player, themed reader) · email OTP (no magic links) · phones, portrait only ·
 English, i18n-ready · multi-file audiobooks in v1 · Literata + publisher-font toggle ·
 MIT · GitHub Pages for the legal and deletion pages · Crashlytics behind consent ·
-stop for review after each milestone · Expo SDK 57 (the plan said 56; 57 is current).
+stop for review after each milestone · Expo SDK 57 (the plan said 56; 57 is current) ·
+skip −30 s / +30 s in the app and on the lock screen (the spec said −15 / +30; changed 2026-10-16).

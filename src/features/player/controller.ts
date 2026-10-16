@@ -141,12 +141,17 @@ function waitUntilLoaded(p: AudioPlayer): Promise<boolean> {
   });
 }
 
-/** Lock screen / notification: chapter as the title, the book as the album. */
+/**
+ * Lock screen / notification. Android shows only title and artist, so those
+ * carry the book and the chapter (the author when there are no chapters).
+ */
 function lockScreenMetadata(): AudioMetadata {
   const { title, author, coverUri, chapters, chapterIdx } = get();
+  // A lone chapter is just the file, usually titled like the book itself.
+  const chapter = chapters.length > 1 ? chapters[chapterIdx]?.title : null;
   return {
-    title: chapters[chapterIdx]?.title ?? title,
-    artist: author ?? undefined,
+    title,
+    artist: chapter ?? author ?? undefined,
     albumTitle: title,
     artworkUrl: coverUri ?? undefined,
   };

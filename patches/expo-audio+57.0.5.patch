@@ -1,5 +1,5 @@
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
-index c76a9fd..b250b53 100644
+index c76a9fd..aa1b381 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
 @@ -24,7 +24,8 @@ import java.lang.ref.WeakReference
@@ -7,7 +7,7 @@ index c76a9fd..b250b53 100644
  private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
  private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
 -private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
-+private const val SEEK_BACK_INTERVAL_MS: Long = 15_000
++private const val SEEK_BACK_INTERVAL_MS: Long = 30_000
 +private const val SEEK_FORWARD_INTERVAL_MS: Long = 30_000
  
  @UnstableApi
@@ -25,7 +25,7 @@ index c76a9fd..b250b53 100644
        if (bufferDurationMs > 0) {
          setLoadControl(
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
-index 196a5d5..b95a3b5 100644
+index 196a5d5..8e4b54f 100644
 --- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 +++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
 @@ -88,8 +88,8 @@ class AudioControlsService : MediaSessionService() {
@@ -39,13 +39,76 @@ index 196a5d5..b95a3b5 100644
        }
      }
  
-@@ -559,6 +559,7 @@ class AudioControlsService : MediaSessionService() {
+@@ -243,7 +243,7 @@ class AudioControlsService : MediaSessionService() {
+     // Add seek backward button if enabled
+     if (currentOptions?.showSeekBackward == true) {
+       mediaButtons.add(
+-        CommandButton.Builder(CommandButton.ICON_SKIP_BACK_10)
++        CommandButton.Builder(CommandButton.ICON_SKIP_BACK_30)
+           .setDisplayName("Seek Backward")
+           .setEnabled(true)
+           .setSessionCommand(SessionCommand(ACTION_SEEK_BACKWARD, Bundle.EMPTY))
+@@ -265,7 +265,7 @@ class AudioControlsService : MediaSessionService() {
+     // Add seek forward button if enabled
+     if (currentOptions?.showSeekForward == true) {
+       mediaButtons.add(
+-        CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_10)
++        CommandButton.Builder(CommandButton.ICON_SKIP_FORWARD_30)
+           .setDisplayName("Seek Forward")
+           .setEnabled(true)
+           .setSessionCommand(SessionCommand(ACTION_SEEK_FORWARD, Bundle.EMPTY))
+@@ -358,7 +358,7 @@ class AudioControlsService : MediaSessionService() {
+         currentArtwork = bitmap
+         postOrStartForegroundNotification(startInForeground = false)
+       }
+-    }
++    } ?: clearArtwork()
+     player?.isActiveForLockScreen = true
+ 
+     if (player != null) {
+@@ -407,7 +407,10 @@ class AudioControlsService : MediaSessionService() {
+         currentArtwork = bitmap
+         postOrStartForegroundNotification(startInForeground = false)
+       }
+-    } ?: postOrStartForegroundNotification(startInForeground = false)
++    } ?: run {
++      clearArtwork()
++      postOrStartForegroundNotification(startInForeground = false)
++    }
+   }
+ 
+   private fun clearSessionInternal() {
+@@ -472,7 +475,7 @@ class AudioControlsService : MediaSessionService() {
+           currentArtwork = bitmap
+           postOrStartForegroundNotification(startInForeground = false)
+         }
+-      }
++      } ?: clearArtwork()
+     } else {
+       setActivePlayerInternal(player, metadata, options)
+     }
+@@ -504,6 +507,14 @@ class AudioControlsService : MediaSessionService() {
+     }
+   }
+ 
++  // Without this, a book with no cover keeps the previous book's cover on the lock screen.
++  private fun clearArtwork() {
++    artworkLoadJob?.cancel()
++    artworkLoadJob = null
++    currentArtwork = null
++    currentArtworkUrl = null
++  }
++
+   private fun hideNotification() {
+     val notificationManager: NotificationManager =
+       getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+@@ -559,6 +570,7 @@ class AudioControlsService : MediaSessionService() {
      const val ACTION_SEEK_FORWARD = "expo.modules.audio.action.SEEK_FORWARD"
      const val ACTION_SEEK_BACKWARD = "expo.modules.audio.action.SEEK_BACKWARD"
  
 -    const val SEEK_INTERVAL_MS = 10000L
 +    const val SEEK_FORWARD_INTERVAL_MS = 30000L
-+    const val SEEK_BACK_INTERVAL_MS = 15000L
++    const val SEEK_BACK_INTERVAL_MS = 30000L
    }
  }
 diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
@@ -66,7 +129,7 @@ index 839aaef..07a5153 100644
      }
      return super.onCustomCommand(session, controller, command, args)
 diff --git a/node_modules/expo-audio/ios/MediaController.swift b/node_modules/expo-audio/ios/MediaController.swift
-index e977f57..5e484c2 100644
+index e977f57..07c1a6e 100644
 --- a/node_modules/expo-audio/ios/MediaController.swift
 +++ b/node_modules/expo-audio/ios/MediaController.swift
 @@ -275,7 +275,7 @@ class MediaController {
@@ -83,7 +146,7 @@ index e977f57..5e484c2 100644
      }
  
 -    remoteCommandCenter.skipBackwardCommand.preferredIntervals = [10.0]
-+    remoteCommandCenter.skipBackwardCommand.preferredIntervals = [15.0]
++    remoteCommandCenter.skipBackwardCommand.preferredIntervals = [30.0]
      remoteCommandCenter.skipBackwardCommand.addTarget { [weak self] event in
        guard let player = self?.activePlayer,
        let event = event as? MPSkipIntervalCommandEvent else {

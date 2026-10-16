@@ -82,5 +82,15 @@
       "^@/(.*)$": "<rootDir>/src/$1"
     }
   },
-  "license": "MIT"
+  "license": "MIT",
+  "expo": {
+    "autolinking": {
+      "android": {
+        "buildFromSource": ["expo-audio"]
+      },
+      "ios": {
+        "buildFromSource": ["expo-audio"]
+      }
+    }
+  }
 }
