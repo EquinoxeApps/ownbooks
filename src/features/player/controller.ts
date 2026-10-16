@@ -372,8 +372,12 @@ export async function unload(): Promise<void> {
   statusSub?.remove();
   statusSub = null;
   if (player) {
+    // remove() only drops expo-audio's registry entry; release() is what stops and frees the
+    // native player. Without it, audio played on until garbage collection (e.g. after delete).
+    player.pause();
     player.clearLockScreenControls();
     player.remove();
+    player.release();
   }
   player = null;
   wasPlaying = false;

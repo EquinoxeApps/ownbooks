@@ -171,9 +171,9 @@ Still to do for the MVP:
       file boundaries). Driven by the player's status updates, which keep coming under lock
 - [x] Device check (build 33196960): speed up to 3× sounds right; a 5-minute timer stops with
       the screen locked (last §6.1 check)
-- [ ] End of chapter at a file boundary: failed on 33196960 (the next file started anyway:
+- [x] End of chapter at a file boundary: failed on 33196960 (the next file started anyway:
       expo-audio's replace() keeps ExoPlayer's playWhenReady). Fixed by pausing before replace()
-      when the next file shouldn't autoplay; re-check on the next build
+      when the next file shouldn't autoplay; verified on dc8c7d5c
 - [x] Library: Continue card (most recently opened unfinished book, time left, play button), sort
       sheet (recent / title / author / date added, remembered per account), filter All / Audio / Ebooks
 - [x] Book detail (⋯ on a row, or long-press): edit title/author, mark as finished / start again,
@@ -181,7 +181,11 @@ Still to do for the MVP:
       Delete removes the rows entirely for now; milestone 5 decides how a deleted book appears
       once sync knows about it (spec: delete is per device, "Remove from all devices" is separate)
 - [x] Device check (build 33196960): Continue card, sort, filter, rename, finished / start again
-- [ ] Device check: delete a book while it's in the mini-player
+- [ ] Delete a book while it's in the mini-player: failed on dc8c7d5c (book left the library and
+      the mini-player closed, but audio kept playing with no controls). expo-audio's remove() only
+      drops its registry entry; the native player stops on release(), which otherwise waits for
+      garbage collection. unload() now pauses and releases. Re-check, also switching books and
+      signing out while playing
 
 ## Milestone 4: Ebooks ⬜
 
