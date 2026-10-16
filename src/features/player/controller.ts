@@ -256,6 +256,9 @@ async function switchTrack(index: number, positionMs: number, autoplay: boolean)
   if (!p || !track) return;
   switchingTrack = true;
   try {
+    // A file that just ended still has ExoPlayer's playWhenReady set, so the next one would
+    // start by itself after replace() unless we pause first (e.g. an end-of-chapter timer).
+    if (!autoplay) p.pause();
     p.replace({ uri: track.uri });
     set({ trackIdx: index, positionMs });
     updateChapter(true);

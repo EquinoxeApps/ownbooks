@@ -42,7 +42,7 @@ track.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/4af6d2f1-69f9-4303-9891-2433309dc93a (`1d83fb3`) |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/33196960-f963-4a0f-a70e-697360ff4b42 (`c235a13`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -169,16 +169,19 @@ Still to do for the MVP:
 - [x] Sleep timer: 5 / 15 / 30 / 45 / 60 min (counts only while playing, fades out over the last
       10 s) and end of chapter (stops at the next chapter's start, follows seeks, works across
       file boundaries). Driven by the player's status updates, which keep coming under lock
-- [ ] Device check: speed up to 3× sounds right; sleep timer stops with the screen locked
-      (last §6.1 check); end of chapter stops at the right place
+- [x] Device check (build 33196960): speed up to 3× sounds right; a 5-minute timer stops with
+      the screen locked (last §6.1 check)
+- [ ] End of chapter at a file boundary: failed on 33196960 (the next file started anyway:
+      expo-audio's replace() keeps ExoPlayer's playWhenReady). Fixed by pausing before replace()
+      when the next file shouldn't autoplay; re-check on the next build
 - [x] Library: Continue card (most recently opened unfinished book, time left, play button), sort
       sheet (recent / title / author / date added, remembered per account), filter All / Audio / Ebooks
 - [x] Book detail (⋯ on a row, or long-press): edit title/author, mark as finished / start again,
       delete from this phone with confirmation. Playing to the end also marks a book finished.
       Delete removes the rows entirely for now; milestone 5 decides how a deleted book appears
       once sync knows about it (spec: delete is per device, "Remove from all devices" is separate)
-- [ ] Device check: Continue card, sort, filter, ⋯ details (rename shows in the player and lock
-      screen, finished / start again, delete while the book is in the mini-player)
+- [x] Device check (build 33196960): Continue card, sort, filter, rename, finished / start again
+- [ ] Device check: delete a book while it's in the mini-player
 
 ## Milestone 4: Ebooks ⬜
 
