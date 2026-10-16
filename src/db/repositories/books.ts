@@ -37,6 +37,17 @@ export async function listLibrary(
   );
 }
 
+/** One book as the library shows it (with its progress fraction). */
+export async function getLibraryItem(db: Db, bookId: string): Promise<LibraryItem | null> {
+  return db.getFirstAsync<LibraryItem>(
+    `SELECT b.*, p.fraction AS fraction
+       FROM books b
+       LEFT JOIN progress p ON p.book_id = b.id
+      WHERE b.id = ?`,
+    [bookId],
+  );
+}
+
 export async function countBooks(db: Db, userId: string): Promise<number> {
   const row = await db.getFirstAsync<{ n: number }>(
     'SELECT COUNT(*) AS n FROM books WHERE user_id = ?',
@@ -163,4 +174,62 @@ export async function applyTags(db: Db, u: TagUpdate): Promise<void> {
 /** Marks a book's tags as read without changing anything (e.g. its files had none). */
 export async function markTagsRead(db: Db, bookId: string): Promise<void> {
   await db.runAsync('UPDATE books SET tags_read = 1 WHERE id = ?', [bookId]);
+}
+
+/** Renames a book (title and author) and marks it for sync. */
+export async function updateBookDetails(
+  db: Db,
+  bookId: string,
+  details: { title: string; author: string | null },
+  at: number,
+): Promise<void> {
+  await db.runAsync('UPDATE books SET title = ?, author = ?, updated_at = ?, dirty = 1 WHERE id = ?', [
+    details.title,
+    details.author,
+    at,
+    bookId,
+  ]);
+}
+
+/**
+ * Marks a book finished (position at the very end, so reopening starts it
+ * again) or not started (position back at the beginning).
+ */
+export async function setFinished(db: Db, bookId: string, finished: boolean, at: number): Promise<void> {
+  await inTransaction(db, async (txn) => {
+    await txn.runAsync('UPDATE books SET finished_at = ?, updated_at = ?, dirty = 1 WHERE id = ?', [
+      finished ? at : null,
+      at,
+      bookId,
+    ]);
+    if (finished) {
+      // Audiobooks rest at the end of their last track; ebooks keep their CFI.
+      const last = await txn.getFirstAsync<{ idx: number; duration_ms: number }>(
+        'SELECT idx, duration_ms FROM tracks WHERE book_id = ? ORDER BY idx DESC LIMIT 1',
+        [bookId],
+      );
+      await txn.runAsync(
+        `INSERT INTO progress (book_id, track_idx, position_ms, fraction, finished_at, updated_at, dirty)
+         VALUES (?, ?, ?, 1, ?, ?, 1)
+         ON CONFLICT(book_id) DO UPDATE SET
+           track_idx = excluded.track_idx, position_ms = excluded.position_ms, fraction = 1,
+           finished_at = excluded.finished_at, updated_at = excluded.updated_at, dirty = 1`,
+        [bookId, last?.idx ?? null, last?.duration_ms ?? null, at, at],
+      );
+    } else {
+      await txn.runAsync(
+        `INSERT INTO progress (book_id, track_idx, position_ms, cfi, fraction, finished_at, updated_at, dirty)
+         VALUES (?, 0, 0, NULL, 0, NULL, ?, 1)
+         ON CONFLICT(book_id) DO UPDATE SET
+           track_idx = 0, position_ms = 0, cfi = NULL, fraction = 0, finished_at = NULL,
+           updated_at = excluded.updated_at, dirty = 1`,
+        [bookId, at],
+      );
+    }
+  });
+}
+
+/** Deletes a book's rows; tracks, chapters and progress cascade. Delete its files first. */
+export async function deleteBookRows(db: Db, bookId: string): Promise<void> {
+  await db.runAsync('DELETE FROM books WHERE id = ?', [bookId]);
 }

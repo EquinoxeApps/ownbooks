@@ -60,6 +60,14 @@ const filled = {
   pause: <Path d="M6 4h4v16H6zM14 4h4v16h-4z" />,
   prevChapter: <Path d="M6 5h2v14H6zM20 5v14l-10-7z" />,
   nextChapter: <Path d="M16 5h2v14h-2zM4 5v14l10-7z" />,
+  // Not in the design set: the book-row "details" button.
+  more: (
+    <>
+      <Circle cx={5} cy={12} r={2} />
+      <Circle cx={12} cy={12} r={2} />
+      <Circle cx={19} cy={12} r={2} />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof stroked | keyof typeof filled;

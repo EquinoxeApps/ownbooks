@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,10 +8,13 @@ import { useDb, useLiveQuery } from '@/db/provider';
 import { listLibrary, type LibraryFilter, type LibraryItem } from '@/db/repositories/books';
 import { useAuthStore } from '@/features/auth/store';
 import { pickAndImport } from '@/features/import/importer';
+import { useLibraryPrefs } from '@/features/library/store';
 import { loadBook } from '@/features/player/controller';
 import { fileUri } from '@/lib/files';
+import { formatDurationShort } from '@/lib/time';
 import {
   Button,
+  Card,
   Chip,
   colors,
   Cover,
@@ -32,19 +35,35 @@ export default function Library() {
     choice === 'audio' ? 'audio' : choice === 'ebook' ? 'ebook' : 'all',
   );
   const db = useDb();
+  const sort = useLibraryPrefs((s) => s.sort);
+  const loadPrefs = useLibraryPrefs((s) => s.load);
 
-  const { data: all } = useLiveQuery((db) => listLibrary(db, userId, 'all'), ['books', 'progress'], userId);
+  useEffect(() => {
+    if (userId) void loadPrefs(db, userId);
+  }, [db, userId, loadPrefs]);
+
+  const { data: all } = useLiveQuery(
+    (db) => listLibrary(db, userId, 'all', sort),
+    ['books', 'progress'],
+    `${userId}:${sort}`,
+  );
   const books = (all ?? []).filter((b) => filter === 'all' || b.type === filter);
+  // The most recently opened book that isn't finished (ebooks join in milestone 4).
+  const current = (all ?? [])
+    .filter((b) => b.last_opened_at != null && b.finished_at == null && b.on_device === 1 && b.type === 'audio')
+    .sort((a, b) => (b.last_opened_at ?? 0) - (a.last_opened_at ?? 0))[0];
 
   const startImport = async () => {
     if (await pickAndImport(db, userId)) router.push('/import');
   };
 
-  const openBook = (book: LibraryItem) => {
+  const openBook = (book: LibraryItem, autoplay = false) => {
     if (book.type !== 'audio' || !book.on_device) return;
     router.push('/player');
-    void loadBook(db, book.id);
+    void loadBook(db, book.id, { autoplay });
   };
+
+  const openDetails = (book: LibraryItem) => router.push({ pathname: '/book/[id]', params: { id: book.id } });
 
   // Avoid flashing the list header before we know whether the shelf is empty.
   if (!all) return <SafeAreaView edges={['top']} style={styles.root} />;
@@ -113,10 +132,19 @@ export default function Library() {
                 onPress={startImport}
               />
             </View>
+            {current ? (
+              <View style={styles.section}>
+                <Text variant="h2" accessibilityRole="header">
+                  {t('library.continue')}
+                </Text>
+                <ContinueCard book={current} onOpen={() => openBook(current)} onPlay={() => openBook(current, true)} />
+              </View>
+            ) : null}
             <View style={styles.sectionRow}>
               <Text variant="h2" accessibilityRole="header">
                 {t('library.yourBooks')}
               </Text>
+              <Button variant="link" label={t('library.sort')} onPress={() => router.push('/sort')} />
             </View>
             <View style={styles.filters}>
               {FILTERS.map((f) => (
@@ -130,37 +158,89 @@ export default function Library() {
             </View>
           </View>
         }
-        renderItem={({ item }) => <BookRow book={item} onPress={() => openBook(item)} />}
+        renderItem={({ item }) => (
+          <BookRow book={item} onPress={() => openBook(item)} onDetails={() => openDetails(item)} />
+        )}
         ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
       />
     </SafeAreaView>
   );
 }
 
-function BookRow({ book, onPress }: { book: LibraryItem; onPress: () => void }) {
+function ContinueCard({ book, onOpen, onPlay }: { book: LibraryItem; onOpen: () => void; onPlay: () => void }) {
+  const { t } = useTranslation();
+  const pct = Math.round((book.fraction ?? 0) * 100);
+  let left: string | null = null;
+  if (book.duration_ms) {
+    const { hours, minutes } = formatDurationShort(book.duration_ms * (1 - (book.fraction ?? 0)));
+    left = hours > 0 ? t('library.hoursLeft', { hours, minutes }) : t('library.minutesLeft', { count: minutes });
+  }
+  return (
+    <Card style={styles.continueCard} padding={16}>
+      <Pressable
+        style={({ pressed }) => [styles.continueBody, pressed && styles.rowPressed]}
+        accessibilityRole="button"
+        accessibilityLabel={[book.title, left, `${pct}%`].filter(Boolean).join(', ')}
+        onPress={onOpen}>
+        <Cover uri={fileUri(book.cover_path)} title={book.title} width={64} height={88} radius={10} />
+        <View style={styles.rowText}>
+          <Text style={styles.continueTitle} numberOfLines={2}>
+            {book.title}
+          </Text>
+          {left ? <Text variant="meta">{left}</Text> : null}
+          <View style={styles.progressRow}>
+            <ProgressBar value={book.fraction ?? 0} />
+            <Text variant="caption" color={colors.primaryDark} style={styles.pct}>
+              {pct}%
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+      <IconButton
+        icon="play"
+        variant="ink"
+        size={52}
+        iconSize={22}
+        accessibilityLabel={t('library.continueListening', { title: book.title })}
+        onPress={onPlay}
+      />
+    </Card>
+  );
+}
+
+function BookRow({ book, onPress, onDetails }: { book: LibraryItem; onPress: () => void; onDetails: () => void }) {
   const { t } = useTranslation();
   const pct = Math.round((book.fraction ?? 0) * 100);
   const meta = [book.author, t(`library.type.${book.type}`)].filter(Boolean).join(' · ');
+  const details = t('library.more', { title: book.title });
   return (
-    <Pressable
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-      accessibilityRole="button"
-      accessibilityLabel={`${book.title}, ${meta}, ${pct}%`}
-      onPress={onPress}>
-      <Cover uri={fileUri(book.cover_path)} title={book.title} width={60} height={84} />
-      <View style={styles.rowText}>
-        <Text variant="title" numberOfLines={2}>
-          {book.title}
-        </Text>
-        <Text variant="meta">{book.on_device ? meta : t('library.notOnDevice')}</Text>
-        <View style={styles.progressRow}>
-          <ProgressBar value={book.fraction ?? 0} />
-          <Text variant="caption" color={colors.primaryDark} style={styles.pct}>
-            {pct}%
+    <View style={styles.rowWrap}>
+      <Pressable
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`${book.title}, ${meta}, ${pct}%`}
+        accessibilityActions={[{ name: 'details', label: details }]}
+        onAccessibilityAction={(e) => {
+          if (e.nativeEvent.actionName === 'details') onDetails();
+        }}
+        onLongPress={onDetails}
+        onPress={onPress}>
+        <Cover uri={fileUri(book.cover_path)} title={book.title} width={60} height={84} />
+        <View style={styles.rowText}>
+          <Text variant="title" numberOfLines={2}>
+            {book.title}
           </Text>
+          <Text variant="meta">{book.on_device ? meta : t('library.notOnDevice')}</Text>
+          <View style={styles.progressRow}>
+            <ProgressBar value={book.fraction ?? 0} />
+            <Text variant="caption" color={colors.primaryDark} style={styles.pct}>
+              {pct}%
+            </Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+      <IconButton icon="more" accessibilityLabel={details} color={colors.muted} iconSize={20} onPress={onDetails} />
+    </View>
   );
 }
 
@@ -185,9 +265,14 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 32 },
   header: { gap: 12, marginBottom: 20 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  section: { gap: 12, marginBottom: 16 },
+  sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   filters: { flexDirection: 'row', gap: 8 },
-  row: { flexDirection: 'row', gap: 16, alignItems: 'center' },
+  continueCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderBottomWidth: 4 },
+  continueBody: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 14 },
+  continueTitle: { fontFamily: fonts.bold, fontSize: 19, lineHeight: 23 },
+  rowWrap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  row: { flex: 1, flexDirection: 'row', gap: 16, alignItems: 'center' },
   rowPressed: { opacity: 0.7 },
   rowText: { flex: 1, gap: 4 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },

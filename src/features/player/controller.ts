@@ -7,7 +7,7 @@ import {
 } from 'expo-audio';
 import { AppState } from 'react-native';
 
-import { getBook, markOpened } from '@/db/repositories/books';
+import { getBook, markOpened, setFinished } from '@/db/repositories/books';
 import { listChapters } from '@/db/repositories/chapters';
 import { getProgress, saveAudioPosition } from '@/db/repositories/progress';
 import { listTracks } from '@/db/repositories/tracks';
@@ -235,6 +235,9 @@ async function advanceTrack() {
     set({ playing: false, positionMs: last?.durationMs ?? 0 });
     wasPlaying = false;
     await savePosition();
+    // Playing to the end counts as finishing the book.
+    const { bookId } = get();
+    if (db && bookId) await setFinished(db, bookId, true, Date.now());
     return;
   }
   // An end-of-chapter timer whose chapter ends with this file stops at the next file's start.
@@ -321,6 +324,13 @@ export async function nextChapter() {
 export async function jumpToChapter(index: number) {
   const chapter = get().chapters[index];
   if (chapter) await seekToGlobal(chapter.globalStartMs);
+}
+
+/** Shows a renamed book's new details in the player and on the lock screen, if it's loaded. */
+export function refreshDetails(bookId: string, title: string, author: string | null) {
+  if (get().bookId !== bookId) return;
+  set({ title, author });
+  player?.updateLockScreenMetadata(lockScreenMetadata());
 }
 
 export function setSpeed(rate: number) {

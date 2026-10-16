@@ -111,7 +111,16 @@
     },
     "continueListening": "Continue listening to {{title}}",
     "minutesLeft": "{{count}} min left",
-    "hoursLeft": "{{hours}} h {{minutes}} min left"
+    "hoursLeft": "{{hours}} h {{minutes}} min left",
+    "sortBy": "Sort by",
+    "sorts": {
+      "recent": "Recently opened",
+      "title": "Title",
+      "author": "Author",
+      "added": "Date added"
+    },
+    "more": "Details for {{title}}",
+    "continueReading": "Continue reading {{title}}"
   },
   "activity": {
     "title": "Activity",
@@ -214,5 +223,23 @@
     "sleepStopsIn": "Stops in {{time}}. The timer only runs while the book plays.",
     "sleepStopsAtChapterEnd": "Stops at the end of this chapter.",
     "sleepOff": "Turn off timer"
+  },
+  "book": {
+    "details": "Book details",
+    "listen": "Listen",
+    "continue": "Continue listening",
+    "edit": "Edit details",
+    "save": "Save",
+    "titleRequired": "Add a title.",
+    "finished": "Finished",
+    "markFinished": "Mark as finished",
+    "startAgain": "Start again",
+    "added": "Added {{date}}",
+    "size": "{{value}} {{unit}} on this phone",
+    "delete": "Delete from this phone",
+    "deleteTitle": "Delete {{title}}?",
+    "deleteBody": "This removes the book and its place from this phone. Your original files aren’t touched.",
+    "deleteConfirm": "Delete",
+    "notFound": "This book isn’t in your library any more."
   }
 }

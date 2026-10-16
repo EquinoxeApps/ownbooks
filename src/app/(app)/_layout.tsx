@@ -61,6 +61,15 @@ export default function AppLayout() {
           }}
         />
       ))}
+      <Stack.Screen
+        name="sort"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+        }}
+      />
       <Stack.Screen name="import" options={{ gestureEnabled: false }} />
       <Stack.Screen name="import-done" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen

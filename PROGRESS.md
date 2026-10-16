@@ -25,7 +25,7 @@ track.
 | 0 | Prerequisites (accounts, MCP servers, backend projects) | ✅ Done (Apple / Play Console pending) |
 | 1 | Foundation | ✅ Done on Android (iPhone waits for the Apple account) |
 | 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
-| 3 | Full audio | 🔨 Partly done (tags, covers, chapters pulled forward) |
+| 3 | Full audio | 🔨 MVP items built; awaiting device checks |
 | 4 | Ebooks | ⬜ Not started |
 | 5 | Sync | ⬜ Not started |
 | 6 | Analytics, polish, release prep | ⬜ Not started |
@@ -171,8 +171,14 @@ Still to do for the MVP:
       file boundaries). Driven by the player's status updates, which keep coming under lock
 - [ ] Device check: speed up to 3× sounds right; sleep timer stops with the screen locked
       (last §6.1 check); end of chapter stops at the right place
-- [ ] Library: Continue card, sort sheet (recent / title / author / date added), filter All / Audio / Ebooks
-- [ ] Book detail: edit title/author, delete with confirmation, mark as finished
+- [x] Library: Continue card (most recently opened unfinished book, time left, play button), sort
+      sheet (recent / title / author / date added, remembered per account), filter All / Audio / Ebooks
+- [x] Book detail (⋯ on a row, or long-press): edit title/author, mark as finished / start again,
+      delete from this phone with confirmation. Playing to the end also marks a book finished.
+      Delete removes the rows entirely for now; milestone 5 decides how a deleted book appears
+      once sync knows about it (spec: delete is per device, "Remove from all devices" is separate)
+- [ ] Device check: Continue card, sort, filter, ⋯ details (rename shows in the player and lock
+      screen, finished / start again, delete while the book is in the mini-player)
 
 ## Milestone 4: Ebooks ⬜
 

@@ -2,6 +2,7 @@ import { createTestDb } from '../../../test/nodeDb';
 import { migrate } from '../migrations';
 import {
   applyTags,
+  deleteBookRows,
   findByFingerprint,
   getBook,
   insertAudioBook,
@@ -9,6 +10,8 @@ import {
   listLibrary,
   markOpened,
   markTagsRead,
+  setFinished,
+  updateBookDetails,
 } from '../repositories/books';
 import { listChapters } from '../repositories/chapters';
 import { getProgress, saveAudioPosition } from '../repositories/progress';
@@ -136,5 +139,52 @@ describe('reading tags of existing books', () => {
     await db.runAsync('UPDATE books SET dirty = 0 WHERE id = ?', ['b1']);
     await applyTags(db, { bookId: 'b1', coverPath: null, trackTitles: [], chapters: [], at: 9000 });
     expect(await getBook(db, 'b1')).toMatchObject({ title: 'Frankenstein', cover_path: null, dirty: 0, updated_at: 1000 });
+  });
+});
+
+describe('book detail actions', () => {
+  it('renames a book and marks it for sync', async () => {
+    await insertAudioBook(db, book);
+    await db.runAsync('UPDATE books SET dirty = 0', []);
+    await updateBookDetails(db, 'b1', { title: 'The Modern Prometheus', author: null }, 5000);
+    expect(await getBook(db, 'b1')).toMatchObject({
+      title: 'The Modern Prometheus',
+      author: null,
+      updated_at: 5000,
+      dirty: 1,
+    });
+  });
+
+  it('marks a book finished at the end of its last track, then starts it again', async () => {
+    await insertAudioBook(db, book);
+    await setFinished(db, 'b1', true, 6000);
+    expect(await getBook(db, 'b1')).toMatchObject({ finished_at: 6000, dirty: 1 });
+    // Tracks are stored in the given order: t2 (idx 0, 2000 ms), t1 (idx 1, 1000 ms).
+    expect(await getProgress(db, 'b1')).toMatchObject({
+      track_idx: 1,
+      position_ms: 1000,
+      fraction: 1,
+      finished_at: 6000,
+      dirty: 1,
+    });
+
+    await setFinished(db, 'b1', false, 7000);
+    expect((await getBook(db, 'b1'))?.finished_at).toBeNull();
+    expect(await getProgress(db, 'b1')).toMatchObject({
+      track_idx: 0,
+      position_ms: 0,
+      fraction: 0,
+      finished_at: null,
+      updated_at: 7000,
+    });
+  });
+
+  it('deletes a book with its tracks, chapters and progress', async () => {
+    await insertAudioBook(db, book);
+    await deleteBookRows(db, 'b1');
+    expect(await getBook(db, 'b1')).toBeNull();
+    expect(await listTracks(db, 'b1')).toEqual([]);
+    expect(await listChapters(db, 'b1')).toEqual([]);
+    expect(await getProgress(db, 'b1')).toBeNull();
   });
 });
