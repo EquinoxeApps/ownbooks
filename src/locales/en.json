@@ -199,6 +199,20 @@
     "errors": {
       "missingFile": "This book’s files are missing from this phone. Import it again to keep listening.",
       "unplayable": "This book couldn’t be played."
-    }
+    },
+    "speed": "Playback speed",
+    "speedButton": "{{speed}}× speed",
+    "speedValue": "{{speed}}×",
+    "speedA11y": "Playback speed, {{speed}} times",
+    "slower": "Slower",
+    "faster": "Faster",
+    "sleep": "Sleep timer",
+    "sleepIn": "Sleep in {{time}}",
+    "sleepAtChapterEnd": "Sleep at chapter end",
+    "sleepOneHour": "1 hour",
+    "sleepEndOfChapter": "End of chapter",
+    "sleepStopsIn": "Stops in {{time}}. The timer only runs while the book plays.",
+    "sleepStopsAtChapterEnd": "Stops at the end of this chapter.",
+    "sleepOff": "Turn off timer"
   }
 }

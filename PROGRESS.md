@@ -164,8 +164,13 @@ Pulled forward after testing a 40-file MP3 book (2026-10-09):
       shows its chapters and cover; lock-screen artwork and chapter name
 
 Still to do for the MVP:
-- [ ] Speed sheet 0.5–3.0× (stored per book already)
-- [ ] Sleep timer (durations + end of chapter), verified with the screen locked (last §6.1 check)
+- [x] Speed sheet 0.5–3.0×: − / + in 0.05 steps and presets, stored per book. expo-audio capped
+      speed at 2.0× on both platforms; the patch raises it to 3.0×
+- [x] Sleep timer: 5 / 15 / 30 / 45 / 60 min (counts only while playing, fades out over the last
+      10 s) and end of chapter (stops at the next chapter's start, follows seeks, works across
+      file boundaries). Driven by the player's status updates, which keep coming under lock
+- [ ] Device check: speed up to 3× sounds right; sleep timer stops with the screen locked
+      (last §6.1 check); end of chapter stops at the right place
 - [ ] Library: Continue card, sort sheet (recent / title / author / date added), filter All / Audio / Ebooks
 - [ ] Book detail: edit title/author, delete with confirmation, mark as finished
 

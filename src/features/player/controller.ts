@@ -16,6 +16,8 @@ import { fileUri } from '@/lib/files';
 
 import { buildChapters, chapterAt, nextChapterStart, previousChapterStart } from './chapters';
 import { fractionOf, fromGlobal, toGlobal } from './position';
+import { retargetSleep, tickSleep, trackEndStops } from './sleep';
+import { clampSpeed } from './speed';
 import { emptyPlayerState, usePlayerStore, type PlayerTrack } from './store';
 
 /**
@@ -38,6 +40,8 @@ let db: Db | null = null;
 let lastSavedAt = 0;
 let wasPlaying = false;
 let switchingTrack = false;
+/** When the sleep timer last counted playback time; 0 while paused. */
+let lastTickAt = 0;
 /** False until the saved position is restored, so early status updates can't overwrite it. */
 let restored = false;
 let audioModeReady: Promise<void> | null = null;
@@ -83,7 +87,7 @@ export async function loadBook(database: Db, bookId: string, opts: { autoplay?: 
     uri: fileUri(t.file_path) ?? '',
   }));
   const chapters = buildChapters(tracks, chapterRows);
-  const speed = progress?.speed ?? 1;
+  const speed = clampSpeed(progress?.speed ?? 1);
   let trackIdx = Math.min(progress?.track_idx ?? 0, tracks.length - 1);
   let positionMs = progress?.position_ms ?? 0;
   // A finished book reopens at the start rather than at the very end.
@@ -178,22 +182,69 @@ function onStatus(status: AudioStatus) {
   }
 
   const now = Date.now();
+  tickSleepTimer(status.playing, now);
   const paused = wasPlaying && !status.playing;
   wasPlaying = status.playing;
   if (paused || (status.playing && now - lastSavedAt >= SAVE_EVERY_MS)) void savePosition();
 }
 
+/** Counts playback time for the sleep timer and stops playback when it runs out. */
+function tickSleepTimer(playing: boolean, now: number) {
+  const elapsedMs = playing && lastTickAt ? now - lastTickAt : 0;
+  lastTickAt = playing ? now : 0;
+  const { sleep, chapters } = get();
+  if (!sleep || !playing) return;
+  const tick = tickSleep(sleep, elapsedMs, globalPosition(), chapters);
+  if (tick.action === 'continue') {
+    set({ sleep: tick.sleep });
+    if (player && player.volume !== tick.volume) player.volume = tick.volume;
+    return;
+  }
+  void stopForSleep(tick.resumeAtGlobalMs);
+}
+
+async function stopForSleep(resumeAtGlobalMs: number | null) {
+  clearSleep();
+  pause();
+  // Rest at the next chapter's start, so resuming doesn't replay the overshoot.
+  if (resumeAtGlobalMs !== null) await seekToGlobal(resumeAtGlobalMs);
+}
+
+function clearSleep() {
+  set({ sleep: null });
+  lastTickAt = 0;
+  if (player) player.volume = 1;
+}
+
+/** Sets the sleep timer: a number of minutes, the end of the current chapter, or off. */
+export function setSleepTimer(choice: { minutes: number } | 'chapterEnd' | null) {
+  clearSleep();
+  if (choice === 'chapterEnd') {
+    set({ sleep: { kind: 'chapterEnd', chapterIdx: chapterAt(get().chapters, globalPosition()) } });
+  } else if (choice) {
+    set({ sleep: { kind: 'duration', remainingMs: choice.minutes * 60_000 } });
+  }
+}
+
 /** Moves to the next file of a multi-file book; at the end of the book, stops there. */
 async function advanceTrack() {
-  const { tracks, trackIdx } = get();
+  const { tracks, trackIdx, chapters, sleep } = get();
   if (trackIdx + 1 >= tracks.length) {
     const last = tracks[tracks.length - 1];
+    clearSleep();
     set({ playing: false, positionMs: last?.durationMs ?? 0 });
     wasPlaying = false;
     await savePosition();
     return;
   }
-  await switchTrack(trackIdx + 1, 0, true);
+  // An end-of-chapter timer whose chapter ends with this file stops at the next file's start.
+  const stop = trackEndStops(sleep, chapters, toGlobal(tracks, trackIdx + 1, 0));
+  if (stop) {
+    clearSleep();
+    set({ playing: false });
+    wasPlaying = false;
+  }
+  await switchTrack(trackIdx + 1, 0, !stop);
 }
 
 async function switchTrack(index: number, positionMs: number, autoplay: boolean) {
@@ -237,8 +288,9 @@ export function togglePlay() {
 
 /** Seeks to a position across the whole book, switching files if needed. */
 export async function seekToGlobal(globalMs: number) {
-  const { tracks, trackIdx, playing } = get();
+  const { tracks, trackIdx, playing, sleep, chapters } = get();
   if (!player || tracks.length === 0) return;
+  if (sleep?.kind === 'chapterEnd') set({ sleep: retargetSleep(sleep, chapters, globalMs) });
   const target = fromGlobal(tracks, globalMs);
   if (target.trackIdx !== trackIdx) {
     await switchTrack(target.trackIdx, target.positionMs, playing);
@@ -272,8 +324,9 @@ export async function jumpToChapter(index: number) {
 }
 
 export function setSpeed(rate: number) {
-  player?.setPlaybackRate(rate);
-  set({ speed: rate });
+  const speed = clampSpeed(rate);
+  player?.setPlaybackRate(speed);
+  set({ speed });
   void savePosition();
 }
 
@@ -312,5 +365,6 @@ export async function unload(): Promise<void> {
   player = null;
   wasPlaying = false;
   restored = false;
+  lastTickAt = 0;
   set(emptyPlayerState);
 }

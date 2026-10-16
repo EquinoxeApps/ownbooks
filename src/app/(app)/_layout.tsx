@@ -48,6 +48,19 @@ export default function AppLayout() {
           contentStyle: { backgroundColor: playerColors.bg },
         }}
       />
+      {['speed', 'sleep'].map((name) => (
+        <Stack.Screen
+          key={name}
+          name={name}
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: 'fitToContents',
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+            contentStyle: { backgroundColor: playerColors.bg },
+          }}
+        />
+      ))}
       <Stack.Screen name="import" options={{ gestureEnabled: false }} />
       <Stack.Screen name="import-done" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen

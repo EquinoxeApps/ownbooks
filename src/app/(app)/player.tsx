@@ -11,8 +11,10 @@ import {
   togglePlay,
 } from '@/features/player/controller';
 import { PlayerCover } from '@/features/player/PlayerCover';
+import { PlayerPill } from '@/features/player/PlayerPill';
 import { toGlobal } from '@/features/player/position';
 import { SeekBar } from '@/features/player/SeekBar';
+import { formatSpeed } from '@/features/player/speed';
 import { usePlayerStore } from '@/features/player/store';
 import { formatClock, formatRemaining } from '@/lib/time';
 import { Icon, IconButton, Text } from '@/ui';
@@ -23,7 +25,7 @@ const SKIP_MS = 30_000;
 
 export default function Player() {
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const s = usePlayerStore();
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/library'));
@@ -45,7 +47,14 @@ export default function Player() {
   const chapterDuration = chapter?.durationMs ?? 0;
   const elapsed = Math.min(chapterDuration, Math.max(0, toGlobal(s.tracks, s.trackIdx, s.positionMs) - chapterStart));
   const heading = multi ? (chapter?.title ?? t('player.chapterFallback', { number: s.chapterIdx + 1 })) : s.title;
-  const coverSize = Math.min(292, width - 96);
+  // Smaller on short screens, so the controls and the speed / sleep row still fit.
+  const coverSize = Math.min(292, width - 96, height * 0.34);
+  const sleepLabel =
+    s.sleep?.kind === 'duration'
+      ? t('player.sleepIn', { time: formatClock(s.sleep.remainingMs) })
+      : s.sleep?.kind === 'chapterEnd'
+        ? t('player.sleepAtChapterEnd')
+        : t('player.sleep');
 
   return (
     <SafeAreaView style={styles.root}>
@@ -152,6 +161,15 @@ export default function Player() {
           <View style={styles.spacer} />
         )}
       </View>
+
+      <View style={styles.extras}>
+        <PlayerPill
+          label={t('player.speedButton', { speed: formatSpeed(s.speed) })}
+          accessibilityLabel={t('player.speedA11y', { speed: formatSpeed(s.speed) })}
+          onPress={() => router.push('/speed')}
+        />
+        <PlayerPill label={sleepLabel} selected={!!s.sleep} onPress={() => router.push('/sleep')} />
+      </View>
     </SafeAreaView>
   );
 }
@@ -190,6 +208,7 @@ const styles = StyleSheet.create({
   times: { flexDirection: 'row', justifyContent: 'space-between' },
   time: { fontFamily: fonts.medium, fontSize: 14, fontVariant: ['tabular-nums'] },
   controls: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  extras: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   spacer: { width: 44, height: 44 },
   playButton: {
     width: 84,

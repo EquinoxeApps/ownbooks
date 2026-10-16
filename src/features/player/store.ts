@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import type { Chapter } from './chapters';
+import type { SleepTimer } from './sleep';
 
 export type PlayerTrack = { title: string | null; durationMs: number; uri: string };
 
@@ -20,6 +21,7 @@ export type PlayerState = {
   buffering: boolean;
   loaded: boolean;
   speed: number;
+  sleep: SleepTimer | null;
   error: 'missingFile' | 'unplayable' | null;
 };
 
@@ -37,6 +39,7 @@ export const emptyPlayerState: PlayerState = {
   buffering: false,
   loaded: false,
   speed: 1,
+  sleep: null,
   error: null,
 };
 
