@@ -209,8 +209,17 @@ Still to do for the MVP:
 - [x] `userInterfaceStyle` is now `automatic` so Auto can follow the phone; app chrome stays
       light because every screen sets its own colours
 - [x] Library, Continue card and book detail open ebooks ("Continue reading", "% read")
-- [ ] Device check on Android (WebView, not desktop Chromium): import, DRM file rejected,
-      reading, settings, contents, position restore after force-quit, external link
+- [x] Device check on build 0f647c5b: import (title, author, cover), settings, contents jump,
+      position restore after force-quit, Continue card "% read", Auto follows dark mode, external
+      link confirmation
+- [ ] Page turns were unreliable on 0f647c5b: foliate's swipe snaps by the speed of the last
+      movement, so short or slowing swipes snapped back, and the tap zones used the wrong
+      coordinates. The bridge now handles touches itself before foliate (window capture): any
+      sideways swipe ≥ 40 px or a tap on the left / right third turns the page. Checked with
+      simulated touches in headless Chrome; re-check on the phone
+- [ ] Contents (and the player's Chapters) sheet dragged the sheet instead of scrolling the list:
+      Android sheets need nestedScrollEnabled on the list. Fixed; re-check
+- [ ] Not yet tried: a DRM-protected EPUB, a damaged file
 
 ## Milestone 5: Sync ⬜
 

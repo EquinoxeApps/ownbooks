@@ -30,6 +30,9 @@ export default function Contents() {
       ) : (
         <FlatList
           data={toc}
+          // Android sheets only let a list scroll when it supports nested scrolling;
+          // otherwise the drag moves the sheet.
+          nestedScrollEnabled
           keyExtractor={(item, index) => `${index}:${item.href}`}
           initialScrollIndex={Math.max(0, currentIndex - 2)}
           onScrollToIndexFailed={() => {}}

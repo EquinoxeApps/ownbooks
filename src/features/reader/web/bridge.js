@@ -75,14 +75,75 @@ function flattenToc(items, depth = 0, out = []) {
   return out;
 }
 
-/** Left / right third of the screen turns the page; the middle is for the app's controls. */
-function onTap(event) {
-  if (event.defaultPrevented || event.target.closest?.('a')) return;
-  if (event.view?.getSelection?.()?.toString()) return;
-  const x = event.screenX / window.innerWidth;
-  if (x < 0.3) view.prev();
-  else if (x > 0.7) view.next();
-  else post({ type: 'tap', zone: 'middle' });
+/** A sideways swipe of at least this many CSS pixels turns the page, however slow. */
+const SWIPE_MIN = 40;
+/** Movement under this is a tap, not a swipe. */
+const TAP_SLOP = 12;
+const TAP_MAX_MS = 500;
+
+/**
+ * Page-turn gestures, handled before foliate sees them. foliate's own swipe follows the finger
+ * and then snaps by the speed of the last movement, so a short or slowing swipe often snapped
+ * back. Here any clear sideways swipe turns the page, and a tap on the left / right third does.
+ * Long-press selection and links are left alone (no preventDefault on touchstart, links skipped).
+ */
+function attachGestures(doc) {
+  const win = doc.defaultView;
+  let start = null;
+  const opts = { capture: true, passive: false };
+  // Window capture runs before foliate's listeners on the document, so they never see the touch.
+  win.addEventListener(
+    'touchstart',
+    (e) => {
+      e.stopPropagation();
+      const t = e.touches[0];
+      start = e.touches.length === 1 && t ? { x: t.clientX, y: t.clientY, time: e.timeStamp } : null;
+    },
+    opts,
+  );
+  win.addEventListener(
+    'touchmove',
+    (e) => {
+      e.stopPropagation();
+      const t = e.touches[0];
+      // Keep a sideways drag from scrolling the page frame natively.
+      if (start && t && Math.abs(t.clientX - start.x) > TAP_SLOP) e.preventDefault();
+    },
+    opts,
+  );
+  win.addEventListener(
+    'touchend',
+    (e) => {
+      e.stopPropagation();
+      const t = e.changedTouches[0];
+      const s = start;
+      start = null;
+      if (!s || !t || e.touches.length > 0) return;
+      const dx = t.clientX - s.x;
+      const dy = t.clientY - s.y;
+      if (Math.abs(dx) >= SWIPE_MIN && Math.abs(dx) > Math.abs(dy) * 1.2) {
+        e.preventDefault();
+        if (dx < 0) view.goRight();
+        else view.goLeft();
+        return;
+      }
+      const isTap = Math.abs(dx) < TAP_SLOP && Math.abs(dy) < TAP_SLOP && e.timeStamp - s.time < TAP_MAX_MS;
+      if (!isTap || e.target.closest?.('a') || win.getSelection()?.toString()) return;
+      // clientX is relative to the section frame; convert to the screen through the frame's box.
+      const frame = win.frameElement?.getBoundingClientRect();
+      const x = ((frame?.left ?? 0) + t.clientX) / window.innerWidth;
+      if (x < 0.3) {
+        e.preventDefault();
+        view.goLeft();
+      } else if (x > 0.7) {
+        e.preventDefault();
+        view.goRight();
+      } else {
+        post({ type: 'tap', zone: 'middle' });
+      }
+    },
+    opts,
+  );
 }
 
 window.ownbooks = {
@@ -91,7 +152,7 @@ window.ownbooks = {
       const file = await loadFile(url);
       view = document.createElement('foliate-view');
       document.body.append(view);
-      view.addEventListener('load', ({ detail: { doc } }) => doc.addEventListener('click', onTap));
+      view.addEventListener('load', ({ detail: { doc } }) => attachGestures(doc));
       view.addEventListener('relocate', ({ detail }) =>
         post({
           type: 'relocate',

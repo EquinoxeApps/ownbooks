@@ -42,6 +42,9 @@ export default function Chapters() {
       </View>
       <FlatList
         data={chapters}
+        // Android sheets only let a list scroll when it supports nested scrolling;
+        // otherwise the drag moves the sheet.
+        nestedScrollEnabled
         keyExtractor={(c) => `${c.trackIdx}:${c.startMs}`}
         getItemLayout={(_, index) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * index, index })}
         initialScrollIndex={Math.min(initialIndex, Math.max(0, chapters.length - 1))}
