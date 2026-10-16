@@ -3,12 +3,13 @@ import { CryptoDigestAlgorithm, digest, randomUUID } from 'expo-crypto';
 import { getDocumentAsync } from 'expo-document-picker';
 import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
-import { findByFingerprint, insertAudioBook, type NewChapter } from '@/db/repositories/books';
+import { findByFingerprint, insertAudioBook, insertEbook, type NewChapter } from '@/db/repositories/books';
 import type { Db } from '@/db/types';
 import { BOOKS_DIR } from '@/lib/files';
 
+import { NotAnEpubError, readEpubInfo } from './epub';
 import { bookFingerprint, fileFingerprint, fingerprintRanges } from './fingerprint';
-import { AUDIO_PICKER_TYPES, extensionOf } from './formats';
+import { AUDIO_PICKER_TYPES, EBOOK_PICKER_TYPES, extensionOf } from './formats';
 import { groupPickedFiles, type ImportGroup, type PickedFile } from './grouping';
 import { bookDetails } from './metadata';
 import { initialImportState, useImportStore, type ImportErrorKey } from './store';
@@ -37,10 +38,13 @@ class ImportFailure extends Error {
 }
 
 type Prepared = {
+  kind: 'audio' | 'ebook';
   tmpDir: Directory;
   /** In playback order. */
   tracks: { fileName: string; title: string; durationMs: number }[];
   chapters: NewChapter[];
+  /** The EPUB's file name inside tmpDir (ebooks only). */
+  ebookFile: string | null;
   /** Cover file name inside tmpDir, if the tags had one. */
   coverFile: string | null;
   title: string;
@@ -70,7 +74,7 @@ function describe(error: unknown): string {
 /** Opens the system picker. Returns false if the user backed out. */
 export async function pickAndImport(db: Db, userId: string): Promise<boolean> {
   const result = await getDocumentAsync({
-    type: AUDIO_PICKER_TYPES,
+    type: [...AUDIO_PICKER_TYPES, ...EBOOK_PICKER_TYPES],
     multiple: true,
     copyToCacheDirectory: false,
   });
@@ -116,7 +120,6 @@ async function prepareCurrent(): Promise<void> {
   let tmpDir: Directory | null = null;
   step = 'checks';
   try {
-    if (group.kind === 'ebook') throw new ImportFailure('ebookSoon');
     if (bytesTotal > 0 && Paths.availableDiskSpace < bytesTotal + SPACE_MARGIN) {
       throw new ImportFailure('noSpace');
     }
@@ -126,7 +129,7 @@ async function prepareCurrent(): Promise<void> {
     tmpDir.create({ intermediates: true });
 
     const copied = await copyGroup(group, tmpDir, s);
-    const prepared = await analyse(group, tmpDir, copied);
+    const prepared = group.kind === 'ebook' ? await analyseEbook(tmpDir, copied[0].fileName) : await analyse(group, tmpDir, copied);
 
     step = 'duplicate check';
     const existing = await findByFingerprint(s.db, s.userId, prepared.fingerprint);
@@ -134,7 +137,7 @@ async function prepareCurrent(): Promise<void> {
 
     if (s !== session || s.cancelled) throw new CopyCancelled();
     s.prepared = prepared;
-    const durationMs = prepared.tracks.reduce((sum, t) => sum + t.durationMs, 0);
+    const durationMs = prepared.kind === 'audio' ? prepared.tracks.reduce((sum, t) => sum + t.durationMs, 0) : null;
     const coverUri = prepared.coverFile ? new File(tmpDir, prepared.coverFile).uri : null;
     set((st) => ({
       status: 'ready',
@@ -143,7 +146,7 @@ async function prepareCurrent(): Promise<void> {
         durationMs,
         coverUri,
         // Details from the tags, unless the user already typed their own.
-        ...(st.current.edited ? null : { title: prepared.title, author: prepared.author }),
+        ...(st.current.edited ? null : { title: prepared.title || st.current.title, author: prepared.author }),
       },
     }));
   } catch (error) {
@@ -219,7 +222,6 @@ async function analyse(
   tmpDir: Directory,
   copied: { fileName: string; picked: PickedFile }[],
 ): Promise<Prepared> {
-  const sha256 = (data: Uint8Array<ArrayBuffer>) => digest(CryptoDigestAlgorithm.SHA256, data);
   const files: { fileName: string; picked: PickedFile; fingerprint: string; tags: AudioTags; durationMs: number }[] =
     [];
   let cover: CoverImage | undefined;
@@ -231,19 +233,7 @@ async function analyse(
     const size = file.size;
     sizeBytes += size;
 
-    const { head, tail } = fingerprintRanges(size);
-    const handle = file.open(FileMode.ReadOnly);
-    let headBytes: Uint8Array;
-    let tailBytes: Uint8Array;
-    try {
-      handle.offset = head[0];
-      headBytes = handle.readBytes(head[1]);
-      handle.offset = tail[0];
-      tailBytes = handle.readBytes(tail[1]);
-    } finally {
-      handle.close();
-    }
-    const fingerprint = await fileFingerprint(size, headBytes, tailBytes, sha256);
+    const fingerprint = await fingerprintFile(file);
 
     step = `tags ${fileName}`;
     // Only the first cover found is kept, so later files skip reading theirs.
@@ -268,6 +258,8 @@ async function analyse(
 
   step = 'book fingerprint';
   return {
+    kind: 'audio',
+    ebookFile: null,
     tmpDir,
     tracks: ordered.map((f, i) => ({ fileName: f.fileName, title: details.trackTitles[i], durationMs: f.durationMs })),
     chapters: ordered.flatMap((f, trackIdx) =>
@@ -282,6 +274,61 @@ async function analyse(
       sha256,
     ),
     sizeBytes,
+  };
+}
+
+const sha256 = (data: Uint8Array<ArrayBuffer>) => digest(CryptoDigestAlgorithm.SHA256, data);
+
+/** SHA-256 over the size, first and last 1 MiB (spec §4.7); never the whole file. */
+async function fingerprintFile(file: File): Promise<string> {
+  const size = file.size;
+  const { head, tail } = fingerprintRanges(size);
+  const handle = file.open(FileMode.ReadOnly);
+  let headBytes: Uint8Array;
+  let tailBytes: Uint8Array;
+  try {
+    handle.offset = head[0];
+    headBytes = handle.readBytes(head[1]);
+    handle.offset = tail[0];
+    tailBytes = handle.readBytes(tail[1]);
+  } finally {
+    handle.close();
+  }
+  return fileFingerprint(size, headBytes, tailBytes, sha256);
+}
+
+/** Reads an EPUB's details and cover, and refuses DRM-protected or unreadable ones. */
+async function analyseEbook(tmpDir: Directory, fileName: string): Promise<Prepared> {
+  const file = new File(tmpDir, fileName);
+  step = 'epub details';
+  let info;
+  try {
+    info = withFileSource(file, readEpubInfo);
+  } catch (error) {
+    if (error instanceof NotAnEpubError) throw new ImportFailure('unreadable', error);
+    throw error;
+  }
+  if (info.drm) throw new ImportFailure('drm');
+
+  let coverFile: string | null = null;
+  if (info.cover) {
+    step = 'cover';
+    coverFile = { 'image/png': 'cover.png', 'image/webp': 'cover.webp', 'image/jpeg': 'cover.jpg' }[info.cover.mime];
+    new File(tmpDir, coverFile).write(info.cover.bytes);
+  }
+
+  step = 'fingerprint';
+  return {
+    kind: 'ebook',
+    tmpDir,
+    tracks: [],
+    chapters: [],
+    ebookFile: fileName,
+    coverFile,
+    title: info.title ?? '',
+    author: info.author,
+    fingerprint: await fingerprintFile(file),
+    sizeBytes: file.size,
   };
 }
 
@@ -335,14 +382,27 @@ export async function saveCurrent(): Promise<string | null> {
     prepared.tmpDir.rename(bookId);
     s.prepared = null;
     step = 'save to database';
-    await insertAudioBook(s.db, {
+    const coverPath = prepared.coverFile ? `${BOOKS_DIR}/${bookId}/${prepared.coverFile}` : null;
+    if (prepared.kind === 'ebook' && prepared.ebookFile) {
+      await insertEbook(s.db, {
+        id: bookId,
+        userId: s.userId,
+        fingerprint: prepared.fingerprint,
+        title,
+        author: current.author?.trim() || null,
+        sizeBytes: prepared.sizeBytes,
+        filePath: `${BOOKS_DIR}/${bookId}/${prepared.ebookFile}`,
+        coverPath,
+        addedAt: Date.now(),
+      });
+    } else await insertAudioBook(s.db, {
       id: bookId,
       userId: s.userId,
       fingerprint: prepared.fingerprint,
       title,
       author: current.author?.trim() || null,
       sizeBytes: prepared.sizeBytes,
-      coverPath: prepared.coverFile ? `${BOOKS_DIR}/${bookId}/${prepared.coverFile}` : null,
+      coverPath,
       chapters: prepared.chapters,
       addedAt: Date.now(),
       tracks: prepared.tracks.map((t) => ({

@@ -28,3 +28,19 @@ export async function saveAudioPosition(db: Db, p: AudioPosition): Promise<void>
     [p.bookId, p.trackIdx, Math.round(p.positionMs), p.fraction, p.speed, p.at],
   );
 }
+
+export type EbookPosition = { bookId: string; cfi: string; fraction: number; at: number };
+
+/** Saves an ebook position (an EPUB CFI, never a page number) and marks it for sync. */
+export async function saveEbookPosition(db: Db, p: EbookPosition): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO progress (book_id, cfi, fraction, updated_at, dirty)
+     VALUES (?, ?, ?, ?, 1)
+     ON CONFLICT(book_id) DO UPDATE SET
+       cfi = excluded.cfi,
+       fraction = excluded.fraction,
+       updated_at = excluded.updated_at,
+       dirty = 1`,
+    [p.bookId, p.cfi, p.fraction, p.at],
+  );
+}

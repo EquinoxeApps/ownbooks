@@ -52,7 +52,16 @@ export default function BookDetail() {
   const finished = book.finished_at != null;
   const fraction = finished ? 1 : (book.fraction ?? 0);
   const pct = Math.round(fraction * 100);
-  const canListen = book.type === 'audio' && book.on_device === 1;
+  const canOpen = book.on_device === 1;
+  const started = fraction > 0 && !finished;
+  const openLabel =
+    book.type === 'ebook'
+      ? started
+        ? t('book.continueReading')
+        : t('book.read')
+      : started
+        ? t('book.continue')
+        : t('book.listen');
 
   const durationLabel = (() => {
     if (!book.duration_ms) return null;
@@ -91,7 +100,11 @@ export default function BookDetail() {
       setEditing(false);
     });
 
-  const listen = () => {
+  const open = () => {
+    if (book.type === 'ebook') {
+      router.push({ pathname: '/reader/[id]', params: { id: book.id } });
+      return;
+    }
     router.push('/player');
     void loadBook(db, book.id);
   };
@@ -137,9 +150,7 @@ export default function BookDetail() {
         ))}
       </View>
 
-      {canListen ? (
-        <Button label={fraction > 0 && !finished ? t('book.continue') : t('book.listen')} onPress={listen} />
-      ) : null}
+      {canOpen ? <Button label={openLabel} onPress={open} /> : null}
 
       {editing ? (
         <View style={styles.fields}>

@@ -118,7 +118,7 @@ export default function ImportScreen() {
         }>
         {header}
         <Text variant="h1" accessibilityRole="header">
-          {t('import.foundAudiobook')}
+          {cur.group.kind === 'ebook' ? t('import.foundEbook') : t('import.foundAudiobook')}
         </Text>
 
         <Card style={styles.bookCard}>

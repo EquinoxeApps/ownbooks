@@ -48,9 +48,9 @@ export default function Library() {
     `${userId}:${sort}`,
   );
   const books = (all ?? []).filter((b) => filter === 'all' || b.type === filter);
-  // The most recently opened book that isn't finished (ebooks join in milestone 4).
+  // The most recently opened book that isn't finished.
   const current = (all ?? [])
-    .filter((b) => b.last_opened_at != null && b.finished_at == null && b.on_device === 1 && b.type === 'audio')
+    .filter((b) => b.last_opened_at != null && b.finished_at == null && b.on_device === 1)
     .sort((a, b) => (b.last_opened_at ?? 0) - (a.last_opened_at ?? 0))[0];
 
   const startImport = async () => {
@@ -58,7 +58,11 @@ export default function Library() {
   };
 
   const openBook = (book: LibraryItem, autoplay = false) => {
-    if (book.type !== 'audio' || !book.on_device) return;
+    if (!book.on_device) return;
+    if (book.type === 'ebook') {
+      router.push({ pathname: '/reader/[id]', params: { id: book.id } });
+      return;
+    }
     router.push('/player');
     void loadBook(db, book.id, { autoplay });
   };
@@ -170,8 +174,8 @@ export default function Library() {
 function ContinueCard({ book, onOpen, onPlay }: { book: LibraryItem; onOpen: () => void; onPlay: () => void }) {
   const { t } = useTranslation();
   const pct = Math.round((book.fraction ?? 0) * 100);
-  let left: string | null = null;
-  if (book.duration_ms) {
+  let left: string | null = book.type === 'ebook' ? t('library.percentRead', { percent: pct }) : null;
+  if (book.type === 'audio' && book.duration_ms) {
     const { hours, minutes } = formatDurationShort(book.duration_ms * (1 - (book.fraction ?? 0)));
     left = hours > 0 ? t('library.hoursLeft', { hours, minutes }) : t('library.minutesLeft', { count: minutes });
   }
@@ -197,11 +201,15 @@ function ContinueCard({ book, onOpen, onPlay }: { book: LibraryItem; onOpen: () 
         </View>
       </Pressable>
       <IconButton
-        icon="play"
+        icon={book.type === 'ebook' ? 'book' : 'play'}
         variant="ink"
         size={52}
         iconSize={22}
-        accessibilityLabel={t('library.continueListening', { title: book.title })}
+        accessibilityLabel={
+          book.type === 'ebook'
+            ? t('library.continueReading', { title: book.title })
+            : t('library.continueListening', { title: book.title })
+        }
         onPress={onPlay}
       />
     </Card>

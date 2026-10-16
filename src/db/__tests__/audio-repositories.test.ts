@@ -5,6 +5,8 @@ import {
   deleteBookRows,
   findByFingerprint,
   getBook,
+  getEbookFilePath,
+  insertEbook,
   insertAudioBook,
   listBooksWithoutTags,
   listLibrary,
@@ -14,7 +16,7 @@ import {
   updateBookDetails,
 } from '../repositories/books';
 import { listChapters } from '../repositories/chapters';
-import { getProgress, saveAudioPosition } from '../repositories/progress';
+import { getProgress, saveAudioPosition, saveEbookPosition } from '../repositories/progress';
 import { listTracks } from '../repositories/tracks';
 import type { Db } from '../types';
 
@@ -186,5 +188,39 @@ describe('book detail actions', () => {
     expect(await listTracks(db, 'b1')).toEqual([]);
     expect(await listChapters(db, 'b1')).toEqual([]);
     expect(await getProgress(db, 'b1')).toBeNull();
+  });
+});
+
+describe('ebooks', () => {
+  const ebook = {
+    id: 'e1',
+    userId: 'u1',
+    fingerprint: 'e'.repeat(64),
+    title: 'Walden',
+    author: 'Henry David Thoreau',
+    sizeBytes: 1234,
+    filePath: 'books/e1/book.epub',
+    coverPath: null,
+    addedAt: 2000,
+  };
+
+  it('stores an ebook with its file and an empty position', async () => {
+    await insertEbook(db, ebook);
+    expect(await getBook(db, 'e1')).toMatchObject({ type: 'ebook', title: 'Walden', size_bytes: 1234, on_device: 1 });
+    expect(await getEbookFilePath(db, 'e1')).toBe('books/e1/book.epub');
+    expect(await getProgress(db, 'e1')).toMatchObject({ fraction: 0, cfi: null, dirty: 0 });
+  });
+
+  it('saves the CFI and fraction, and deleting the book removes its file row', async () => {
+    await insertEbook(db, ebook);
+    await saveEbookPosition(db, { bookId: 'e1', cfi: 'epubcfi(/6/4!/4/2/1:0)', fraction: 0.25, at: 3000 });
+    expect(await getProgress(db, 'e1')).toMatchObject({
+      cfi: 'epubcfi(/6/4!/4/2/1:0)',
+      fraction: 0.25,
+      updated_at: 3000,
+      dirty: 1,
+    });
+    await deleteBookRows(db, 'e1');
+    expect(await getEbookFilePath(db, 'e1')).toBeNull();
   });
 });

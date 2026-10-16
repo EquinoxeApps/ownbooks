@@ -19,14 +19,20 @@ export default function ImportDone() {
     savedBookIds: useImportStore.getState().savedBookIds,
     fileCount: useImportStore.getState().lastSavedFileCount,
   }));
-  const [book, setBook] = useState<{ title: string; coverUri: string | null }>({ title: '', coverUri: null });
+  const [book, setBook] = useState<{ title: string; coverUri: string | null; ebook: boolean }>({
+    title: '',
+    coverUri: null,
+    ebook: false,
+  });
   const title = book.title;
   const lastId = savedBookIds[savedBookIds.length - 1];
 
   useEffect(() => {
     cancelImport();
     if (lastId) {
-      void getBook(db, lastId).then((b) => setBook({ title: b?.title ?? '', coverUri: fileUri(b?.cover_path) }));
+      void getBook(db, lastId).then((b) =>
+        setBook({ title: b?.title ?? '', coverUri: fileUri(b?.cover_path), ebook: b?.type === 'ebook' }),
+      );
     }
   }, [db, lastId]);
 
@@ -37,9 +43,13 @@ export default function ImportDone() {
       footer={
         <>
           <Button
-            label={t('import.done.start')}
+            label={book.ebook ? t('import.done.startReading') : t('import.done.start')}
             disabled={!lastId}
             onPress={async () => {
+              if (book.ebook) {
+                router.replace({ pathname: '/reader/[id]', params: { id: lastId } });
+                return;
+              }
               router.replace('/player');
               await loadBook(db, lastId, { autoplay: true });
             }}

@@ -190,12 +190,27 @@ Still to do for the MVP:
 
 ## Milestone 4: Ebooks ⬜
 
-- [ ] foliate-js spike in a WebView (fallback: epub.js); vendored at a pinned commit
-- [ ] EPUB import + DRM detection (`META-INF/encryption.xml`)
-- [ ] Reader: paginated, tap/swipe, themes light/sepia/dark (follow system), text size,
-      line spacing, margins, Literata + publisher-font toggle
-- [ ] TOC, CFI persistence, font-size change keeps the passage, link handling (confirm external)
-- [ ] EPUB fingerprint at import; remove the "Ebooks arrive in the next update" import error
+- [x] foliate-js vendored at `78914ae` in `src/vendor/foliate-js` (EPUB files only; other formats
+      stubbed). `npm run build:reader` bundles it with `src/features/reader/web/bridge.js` (esbuild)
+      into one page with Literata embedded and a CSP that allows only that script by hash. Section
+      frames are blob: documents and inherit the CSP, so scripts inside EPUBs never run and nothing
+      loads from the network
+- [x] Spike in desktop Chromium (headless, 24 MB illustrated Gutenberg EPUB): renders, TOC (63
+      items), page turns, CFI restore exact, 18 → 24 px keeps the passage, dark + book's font. No
+      CSP violations
+- [x] EPUB import: ranged ZIP reader (fflate inflate) + small XML parser; title, author (EPUB 3
+      refines / EPUB 2 opf:role), cover (cover-image / meta cover); DRM = rights.xml, sinf.xml or
+      encryption.xml with anything but font obfuscation; damaged EPUBs get their own message;
+      fingerprint like single audio files
+- [x] Reader: paginated, swipe or tap the left / right third, top bar (back, "Title · 68%",
+      Aa, contents), settings sheet (theme Auto / Light / Sepia / Dark, text size 14–30, line
+      spacing, margins, Literata / book's font) remembered per account, contents sheet, CFI saved
+      800 ms after page turns and on background, external links confirmed then opened in the browser
+- [x] `userInterfaceStyle` is now `automatic` so Auto can follow the phone; app chrome stays
+      light because every screen sets its own colours
+- [x] Library, Continue card and book detail open ebooks ("Continue reading", "% read")
+- [ ] Device check on Android (WebView, not desktop Chromium): import, DRM file rejected,
+      reading, settings, contents, position restore after force-quit, external link
 
 ## Milestone 5: Sync ⬜
 

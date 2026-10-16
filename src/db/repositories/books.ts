@@ -233,3 +233,41 @@ export async function setFinished(db: Db, bookId: string, finished: boolean, at:
 export async function deleteBookRows(db: Db, bookId: string): Promise<void> {
   await db.runAsync('DELETE FROM books WHERE id = ?', [bookId]);
 }
+
+export type NewEbook = {
+  id: string;
+  userId: string;
+  fingerprint: string;
+  title: string;
+  author: string | null;
+  sizeBytes: number;
+  /** Relative path (books/<id>/book.epub). */
+  filePath: string;
+  coverPath: string | null;
+  addedAt: number;
+};
+
+/** Inserts an ebook with its file and an empty progress row, atomically. */
+export async function insertEbook(db: Db, book: NewEbook): Promise<void> {
+  await inTransaction(db, async (txn) => {
+    await txn.runAsync(
+      `INSERT INTO books (id, user_id, fingerprint, type, title, author, cover_path, size_bytes,
+                          on_device, added_at, updated_at, dirty, tags_read)
+       VALUES (?, ?, ?, 'ebook', ?, ?, ?, ?, 1, ?, ?, 1, 1)`,
+      [book.id, book.userId, book.fingerprint, book.title, book.author, book.coverPath, book.sizeBytes, book.addedAt, book.addedAt],
+    );
+    await txn.runAsync('INSERT INTO ebook_files (book_id, file_path) VALUES (?, ?)', [book.id, book.filePath]);
+    await txn.runAsync(
+      'INSERT INTO progress (book_id, fraction, updated_at, dirty) VALUES (?, 0, ?, 0)',
+      [book.id, book.addedAt],
+    );
+  });
+}
+
+/** Relative path of an ebook's EPUB file. */
+export async function getEbookFilePath(db: Db, bookId: string): Promise<string | null> {
+  const row = await db.getFirstAsync<{ file_path: string }>('SELECT file_path FROM ebook_files WHERE book_id = ?', [
+    bookId,
+  ]);
+  return row?.file_path ?? null;
+}

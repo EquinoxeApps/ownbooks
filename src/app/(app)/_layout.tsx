@@ -62,6 +62,25 @@ export default function AppLayout() {
         />
       ))}
       <Stack.Screen
+        name="contents"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.9],
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+        }}
+      />
+      <Stack.Screen
+        name="reader-settings"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+          contentStyle: { backgroundColor: colors.surface },
+        }}
+      />
+      <Stack.Screen
         name="sort"
         options={{
           presentation: 'formSheet',

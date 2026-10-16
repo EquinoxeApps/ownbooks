@@ -13,7 +13,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   scheme: 'ownbooks',
-  userInterfaceStyle: 'light',
+  // 'automatic' so the reader can follow the system theme; app chrome stays light by its own colours.
+  userInterfaceStyle: 'automatic',
   backgroundColor: '#F7F9F6',
   ios: {
     bundleIdentifier: BUNDLE_ID,

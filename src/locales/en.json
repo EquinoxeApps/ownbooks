@@ -120,7 +120,9 @@
       "added": "Date added"
     },
     "more": "Details for {{title}}",
-    "continueReading": "Continue reading {{title}}"
+    "continueReading": "Continue reading {{title}}",
+    "continueReadingShort": "Continue reading",
+    "percentRead": "{{percent}}% read"
   },
   "activity": {
     "title": "Activity",
@@ -168,8 +170,8 @@
       "duplicate": "This book is already in your library.",
       "unplayable": "This file couldn’t be played. It may be damaged or in an unusual format.",
       "noSpace": "There isn’t enough free space on this phone for this book.",
-      "ebookSoon": "Ebooks arrive in the next update. For now you can add audiobooks.",
-      "generic": "Something went wrong while adding this book. Nothing was saved."
+      "generic": "Something went wrong while adding this book. Nothing was saved.",
+      "unreadable": "This ebook couldn’t be opened. The file may be damaged or not a real EPUB."
     },
     "rejectedSome_one": "{{count}} file was skipped because it isn’t supported.",
     "rejectedSome_other": "{{count}} files were skipped because they aren’t supported.",
@@ -179,9 +181,11 @@
       "filesBecameOne": "{{count}} audio files became one audiobook.",
       "single": "It’s in your library now.",
       "start": "Start listening",
-      "library": "Go to library"
+      "library": "Go to library",
+      "startReading": "Start reading"
     },
-    "errorDetail": "Details for support: {{detail}}"
+    "errorDetail": "Details for support: {{detail}}",
+    "foundEbook": "We found your ebook."
   },
   "player": {
     "open": "Open player: {{title}}",
@@ -240,6 +244,49 @@
     "deleteTitle": "Delete {{title}}?",
     "deleteBody": "This removes the book and its place from this phone. Your original files aren’t touched.",
     "deleteConfirm": "Delete",
-    "notFound": "This book isn’t in your library any more."
+    "notFound": "This book isn’t in your library any more.",
+    "read": "Read",
+    "continueReading": "Continue reading"
+  },
+  "reader": {
+    "back": "Back to library",
+    "contents": "Contents",
+    "settings": "Reading settings",
+    "settingsShort": "Aa",
+    "progress": "{{title}} · {{percent}}%",
+    "loading": "Opening your book…",
+    "missingFile": "This book’s file is missing from this phone. Import it again to keep reading.",
+    "openFailed": "This book couldn’t be opened.",
+    "noContents": "This book has no table of contents.",
+    "externalTitle": "Open this link?",
+    "externalBody": "{{href}} will open in your browser.",
+    "open": "Open",
+    "theme": "Theme",
+    "themes": {
+      "auto": "Auto",
+      "light": "Light",
+      "sepia": "Sepia",
+      "dark": "Dark"
+    },
+    "textSize": "Text size",
+    "smaller": "Smaller text",
+    "larger": "Larger text",
+    "lineSpacing": "Line spacing",
+    "lineSpacings": {
+      "tight": "Tight",
+      "normal": "Normal",
+      "loose": "Loose"
+    },
+    "margins": "Margins",
+    "marginOptions": {
+      "narrow": "Narrow",
+      "normal": "Normal",
+      "wide": "Wide"
+    },
+    "font": "Font",
+    "fonts": {
+      "literata": "Literata",
+      "publisher": "Book’s font"
+    }
   }
 }

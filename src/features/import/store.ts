@@ -8,7 +8,7 @@ export type ImportErrorKey =
   | 'duplicate'
   | 'unplayable'
   | 'noSpace'
-  | 'ebookSoon'
+  | 'unreadable'
   | 'generic';
 
 export type ImportStatus =
