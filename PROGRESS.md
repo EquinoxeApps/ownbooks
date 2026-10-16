@@ -26,7 +26,7 @@ track.
 | 1 | Foundation | ✅ Done on Android (iPhone waits for the Apple account) |
 | 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
 | 3 | Full audio | ✅ MVP items done on Android (deferred items listed under "After the MVP") |
-| 4 | Ebooks | ⬜ Not started |
+| 4 | Ebooks | ✅ Done on Android (DRM / damaged-file import still to try on a device) |
 | 5 | Sync | ⬜ Not started |
 | 6 | Analytics, polish, release prep | ⬜ Not started |
 
@@ -42,7 +42,7 @@ track.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/d60b3c42-624c-4ed5-925f-035170694a67 (`b4ea252`) |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/6016ea88-d3c9-4c7c-bd97-d73b4e06da9f (`0a63be7`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -188,7 +188,7 @@ Still to do for the MVP:
       switching books and signing out while playing (opening another book's player stops the
       current one: one book is loaded at a time)
 
-## Milestone 4: Ebooks ⬜
+## Milestone 4: Ebooks ✅
 
 - [x] foliate-js vendored at `78914ae` in `src/vendor/foliate-js` (EPUB files only; other formats
       stubbed). `npm run build:reader` bundles it with `src/features/reader/web/bridge.js` (esbuild)
@@ -217,11 +217,12 @@ Still to do for the MVP:
       coordinates. The bridge now handles touches itself before foliate (window capture): any
       sideways swipe ≥ 40 px or a tap on the left / right third turns the page. Checked with
       simulated touches in headless Chrome; smooth on the phone with d86811f3
-- [ ] Contents (and the player's Chapters) sheet dragged the sheet instead of scrolling the list:
+- [x] Contents (and the player's Chapters) sheet dragged the sheet instead of scrolling the list:
       Android sheets need nestedScrollEnabled on the list (Chapters fixed on d86811f3). Contents
       still couldn't scroll up: it used initialScrollIndex without getItemLayout, so the rows above
-      the current chapter were never laid out. Rows now have a fixed height; re-check
-- [ ] Not yet tried: a DRM-protected EPUB, a damaged file
+      the current chapter were never laid out. Rows now have a fixed height; verified on 6016ea88
+- [ ] Not yet tried on a device: a DRM-protected EPUB, a damaged file (both covered by unit tests;
+      try when one is at hand)
 
 ## Milestone 5: Sync ⬜
 
