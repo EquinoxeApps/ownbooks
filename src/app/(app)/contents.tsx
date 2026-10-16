@@ -5,6 +5,9 @@ import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { useReaderStore } from '@/features/reader/store';
 import { colors, fonts, Text } from '@/ui';
 
+/** Fixed, so the list can open scrolled to the current chapter (initialScrollIndex needs getItemLayout). */
+const ROW_HEIGHT = 64;
+
 /** Table of contents sheet, opened from the reader. */
 export default function Contents() {
   const { t } = useTranslation();
@@ -34,8 +37,8 @@ export default function Contents() {
           // otherwise the drag moves the sheet.
           nestedScrollEnabled
           keyExtractor={(item, index) => `${index}:${item.href}`}
+          getItemLayout={(_, index) => ({ length: ROW_HEIGHT, offset: ROW_HEIGHT * index, index })}
           initialScrollIndex={Math.max(0, currentIndex - 2)}
-          onScrollToIndexFailed={() => {}}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => {
             const current = item.href !== null && item.href === currentHref;
@@ -64,10 +67,9 @@ const styles = StyleSheet.create({
   empty: { paddingHorizontal: 20 },
   list: { paddingBottom: 32 },
   row: {
-    minHeight: 52,
+    height: ROW_HEIGHT,
     justifyContent: 'center',
     paddingRight: 20,
-    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
