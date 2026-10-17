@@ -237,10 +237,10 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       Button hidden until EXPO_PUBLIC_FACEBOOK_APP_ID is set
 - [x] Apple on Android through Apple's web sign-in (PKCE, ownbooks://auth/callback), hidden until
       EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1. Supabase client now uses flowType pkce
-- [ ] Hosted Supabase settings (Management API, after `npx supabase login`): email confirmations on,
+- [x] Hosted Supabase settings applied 2026-10-17 (Management API): email confirmations on,
       minimum password 8, leaked-password check, confirmation + recovery templates
-      (`supabase/templates/signup-code.html`, `reset-code.html`), redirect URL ownbooks://auth/callback,
-      Facebook provider (App ID + secret)
+      (`supabase/templates/signup-code.html`, `reset-code.html`), redirect URL ownbooks://auth/callback.
+      Still to do: the Facebook provider (App ID + secret, entered by the user in the dashboard)
 - [ ] Meta app: Consumer type, Facebook Login, email permission, Android package dev.ownbooks.app,
       key hash `a63TPQ2ETyTeWFENibUN1beRXOg=` (EAS keystore), privacy policy + data deletion URLs;
       App ID + client token as EAS env vars
