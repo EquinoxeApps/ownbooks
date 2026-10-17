@@ -42,7 +42,7 @@ track.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/6016ea88-d3c9-4c7c-bd97-d73b4e06da9f (`0a63be7`) |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/d6f98a33-8e88-414c-b4fe-3a660eac21c2 (`3e5637f`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -255,8 +255,10 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       key hash `a63TPQ2ETyTeWFENibUN1beRXOg=` (EAS keystore), privacy policy + data deletion URLs;
       App ID + client token as EAS env vars; Facebook provider enabled in Supabase (checked 2026-10-17)
 - [ ] Apple Services ID + key (after the Apple Developer account), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
-- [ ] Device checks: create account → code → library; sign in / wrong password; forgot password;
-      Facebook; Google still works; same email via Google and password lands on one account
+- [x] Device checks (builds c4103406 and d6f98a33, 2026-10-17): breached password refused with its own
+      message; create account → code → library; sign in and wrong-password message; forgot password
+      (code + new password); Facebook via the SDK and the Edge Function → library
+- [ ] Still to try: Google and email/password on the same address land on one account
 
 ## Milestone 5: Sync ⬜
 
