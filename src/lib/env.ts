@@ -8,6 +8,9 @@ export const env = {
   supabaseAnonKey: clean(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
   googleWebClientId: clean(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
   googleIosClientId: clean(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID),
+  facebookAppId: clean(process.env.EXPO_PUBLIC_FACEBOOK_APP_ID),
+  /** Apple's web sign-in on Android; needs an Apple Services ID configured in Supabase. */
+  appleWebSignIn: process.env.EXPO_PUBLIC_APPLE_WEB_SIGN_IN === '1',
   legalBaseUrl:
     clean(process.env.EXPO_PUBLIC_LEGAL_BASE_URL) ?? 'https://equinoxestudios.github.io/ownbooks',
 } as const;

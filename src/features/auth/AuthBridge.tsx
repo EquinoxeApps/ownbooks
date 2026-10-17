@@ -42,6 +42,9 @@ export function AuthBridge({ children }: { children: ReactNode }) {
         if (cancelled) return;
         bootStep(`auth event ${event}`);
         const { signedIn, signedOut, account } = useAuthStore.getState();
+        // A verified reset code creates a session, but the user is only signed in once the
+        // new password is saved (the USER_UPDATED event that follows).
+        if (event === 'PASSWORD_RECOVERY') return;
         if (session?.user) {
           await signedIn(db, accountFromUser(session.user));
           return;

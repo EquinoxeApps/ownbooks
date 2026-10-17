@@ -18,6 +18,8 @@ export const supabase: SupabaseClient | null =
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: false,
+          // Web sign-ins (Apple on Android) return a code to exchange; ID-token and OTP flows are unaffected.
+          flowType: 'pkce',
         },
       })
     : null;

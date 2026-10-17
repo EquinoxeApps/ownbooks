@@ -5,7 +5,9 @@ import { StyleSheet, View } from 'react-native';
 
 import {
   isAppleSignInSupported,
+  isFacebookSignInConfigured,
   signInWithApple,
+  signInWithFacebook,
   signInWithGoogle,
 } from '@/features/auth/providers';
 import { useAuthAction } from '@/features/auth/useAuthAction';
@@ -37,6 +39,15 @@ export default function SignIn() {
         disabled={busy != null}
         onPress={() => run('google', signInWithGoogle)}
       />
+      {isFacebookSignInConfigured ? (
+        <Button
+          variant="secondary"
+          label={t('auth.signIn.facebook')}
+          loading={busy === 'facebook'}
+          disabled={busy != null}
+          onPress={() => run('facebook', signInWithFacebook)}
+        />
+      ) : null}
       <Button
         variant="secondary"
         label={t('auth.signIn.email')}

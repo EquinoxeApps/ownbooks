@@ -37,7 +37,7 @@ track.
 | Repo | https://github.com/EquinoxeStudios/ownbooks (public, MIT) |
 | CI | GitHub Actions: lint, typecheck, Jest, RLS tests against local Supabase (all green) |
 | Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Studios org (Pro), eu-central-1 |
-| Supabase auth | Email 6-digit OTP (custom templates), Google (web + iOS client IDs, skip nonce on) |
+| Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
 | Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added |
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
@@ -224,6 +224,30 @@ Still to do for the MVP:
 - [ ] Not yet tried on a device: a DRM-protected EPUB, a damaged file (both covered by unit tests;
       try when one is at hand)
 
+## Sign-in methods (changed 2026-10-17)
+
+Google, Facebook, Apple, or email + password, for both signing in and creating an account. The
+passwordless email code is gone; codes now only confirm a new account and reset a password.
+- [x] Email + password: sign in, create account (6-digit confirmation code), forgot / reset password
+      (code + new password; the PASSWORD_RECOVERY event is ignored so the user is signed in only once
+      the new password is saved). Minimum 8 characters; wrong password, unconfirmed email, existing
+      account, short / leaked / weak password each get their own message. Unit-tested with a mocked client
+- [x] Facebook through react-native-fbsdk-next + signInWithIdToken (access token). SDK starts only on
+      tap, no app events, no advertising ID (AD_ID permission blocked), logged out after sign-in.
+      Button hidden until EXPO_PUBLIC_FACEBOOK_APP_ID is set
+- [x] Apple on Android through Apple's web sign-in (PKCE, ownbooks://auth/callback), hidden until
+      EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1. Supabase client now uses flowType pkce
+- [ ] Hosted Supabase settings (Management API, after `npx supabase login`): email confirmations on,
+      minimum password 8, leaked-password check, confirmation + recovery templates
+      (`supabase/templates/signup-code.html`, `reset-code.html`), redirect URL ownbooks://auth/callback,
+      Facebook provider (App ID + secret)
+- [ ] Meta app: Consumer type, Facebook Login, email permission, Android package dev.ownbooks.app,
+      key hash `a63TPQ2ETyTeWFENibUN1beRXOg=` (EAS keystore), privacy policy + data deletion URLs;
+      App ID + client token as EAS env vars
+- [ ] Apple Services ID + key (after the Apple Developer account), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
+- [ ] Device checks: create account → code → library; sign in / wrong password; forgot password;
+      Facebook; Google still works; same email via Google and password lands on one account
+
 ## Milestone 5: Sync ⬜
 
 - [x] Fingerprints (SHA-256 of size + first 1 MB + last 1 MB; multi-file = hash of track hashes):
@@ -246,7 +270,8 @@ Still to do for the MVP:
 - [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page
 - [ ] Production email sender in Supabase (e.g. Resend)
 - [ ] Final bundle ID and legal entity; Google OAuth consent screen → In production
-- [ ] Play Console: store listing, data-safety form (email, usage data, diagnostics), closed testing
+- [ ] Play Console: store listing, data-safety form (email, usage data, diagnostics; the Facebook SDK
+      is in the app for sign-in only, with app events and the advertising ID off), closed testing
       track. New personal developer accounts need a closed test with 12+ testers for 14 days
       before production access
 
@@ -265,13 +290,14 @@ Deferred on 2026-10-16 to reach the MVP sooner:
 
 - **Apple Developer account** ($99/yr): needed for any iPhone build and Sign in with Apple.
 - **Google Play Console** ($25): needed for release (Milestone 6).
-- **Production email sender** (e.g. Resend or Postmark): Supabase's built-in sender is for testing only.
+- **Production email sender** (e.g. Resend or Postmark): Supabase's built-in sender is for testing only,
+  and only sends a few emails an hour; sign-up and reset codes make this more pressing.
 - **Final bundle ID + publishing entity**: placeholder is `dev.ownbooks.app`.
 
 ## Decisions (from the planning interview)
 
 Synced daily Activity totals (no link to any book) · devices table · light-only app
-chrome (dark player, themed reader) · email OTP (no magic links) · phones, portrait only ·
+chrome (dark player, themed reader) · sign-in with Google, Facebook (SDK), Apple (iPhone native, Android web) or email + password, codes to confirm and reset (2026-10-17; replaced passwordless email OTP) · phones, portrait only ·
 English, i18n-ready · multi-file audiobooks in v1 · Literata + publisher-font toggle ·
 MIT · GitHub Pages for the legal and deletion pages · Crashlytics behind consent ·
 stop for review after each milestone · Expo SDK 57 (the plan said 56; 57 is current) ·

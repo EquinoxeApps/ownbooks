@@ -3,13 +3,14 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
-import { sendEmailCode, verifyEmailCode } from '@/features/auth/providers';
+import { confirmSignUp, resendSignUpCode } from '@/features/auth/providers';
 import { useAuthAction } from '@/features/auth/useAuthAction';
 import { BackHeader, Button, ErrorText, Screen, Text, TextField } from '@/ui';
 
 const CODE_LENGTH = 6;
 const RESEND_AFTER_S = 60;
 
+/** Confirms a new email + password account with the 6-digit code from the sign-up email. */
 export default function VerifyCode() {
   const { t } = useTranslation();
   const { email = '' } = useLocalSearchParams<{ email: string }>();
@@ -24,7 +25,7 @@ export default function VerifyCode() {
   }, [cooldown]);
 
   // Success needs no navigation: the auth listener flips the route guard.
-  const verify = (value: string) => run('verify', () => verifyEmailCode(email, value));
+  const verify = (value: string) => run('verify', () => confirmSignUp(email, value));
 
   const onChange = (v: string) => {
     const digits = v.replace(/\D/g, '').slice(0, CODE_LENGTH);
@@ -33,7 +34,7 @@ export default function VerifyCode() {
   };
 
   const resend = async () => {
-    const ok = await run('resend', () => sendEmailCode(email));
+    const ok = await run('resend', () => resendSignUpCode(email));
     if (ok) {
       setCode('');
       setCooldown(RESEND_AFTER_S);

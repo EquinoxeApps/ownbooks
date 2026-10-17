@@ -47,18 +47,24 @@
       "apple": "Continue with Apple",
       "google": "Continue with Google",
       "email": "Continue with email",
-      "legal": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>."
+      "legal": "By continuing you agree to the <terms>Terms</terms> and <privacy>Privacy policy</privacy>.",
+      "facebook": "Continue with Facebook"
     },
     "email": {
-      "title": "What’s your email?",
-      "lead": "We’ll send you a 6-digit code. No password needed.",
+      "title": "Sign in with email.",
+      "lead": "Use the email and password of your OwnBooks account.",
       "label": "Email address",
       "placeholder": "you@example.com",
-      "send": "Send code",
-      "invalid": "That doesn’t look like an email address."
+      "invalid": "That doesn’t look like an email address.",
+      "passwordLabel": "Password",
+      "show": "Show password",
+      "hide": "Hide password",
+      "submit": "Sign in",
+      "forgot": "Forgot password?",
+      "createAccount": "New here? Create an account"
     },
     "verify": {
-      "title": "Check your email.",
+      "title": "Confirm your email.",
       "lead": "Enter the 6-digit code we sent to {{email}}.",
       "label": "6-digit code",
       "submit": "Verify",
@@ -78,6 +84,32 @@
       "lead": "They stay hidden while you’re signed in. You can remove them to free up space.",
       "keep": "Keep them hidden",
       "remove": "Remove them from this phone"
+    },
+    "createAccount": {
+      "title": "Create your account.",
+      "lead": "We’ll email you a 6-digit code to confirm the address.",
+      "passwordHint": "At least 8 characters.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account? Sign in",
+      "exists": "An account with this email already exists. Sign in, or reset your password."
+    },
+    "password": {
+      "wrong": "That email and password don’t match. Try again, or reset your password.",
+      "tooShort": "Use at least 8 characters.",
+      "leaked": "This password has appeared in a data breach elsewhere. Please choose another one.",
+      "weak": "Please choose a stronger password."
+    },
+    "forgot": {
+      "title": "Reset your password.",
+      "lead": "We’ll email you a 6-digit code to set a new password.",
+      "send": "Send code"
+    },
+    "reset": {
+      "title": "Choose a new password.",
+      "lead": "Enter the 6-digit code we sent to {{email}}, then your new password.",
+      "codeLabel": "6-digit code",
+      "newPassword": "New password",
+      "submit": "Save password"
     }
   },
   "tabs": {
@@ -133,7 +165,8 @@
     "signedInWith": {
       "apple": "Signed in with Apple",
       "google": "Signed in with Google",
-      "email": "Signed in with email"
+      "email": "Signed in with email",
+      "facebook": "Signed in with Facebook"
     },
     "settings": "Settings",
     "privacy": "Privacy policy",

@@ -4,6 +4,9 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 // app at their own backend. See .env.example.
 const BUNDLE_ID = process.env.OWNBOOKS_BUNDLE_ID || 'dev.ownbooks.app';
 const GOOGLE_IOS_URL_SCHEME = process.env.GOOGLE_IOS_URL_SCHEME;
+// Facebook App ID and client token are public values (Meta for Developers → Settings).
+const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
+const FACEBOOK_CLIENT_TOKEN = process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -38,6 +41,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.READ_EXTERNAL_STORAGE',
       'android.permission.WRITE_EXTERNAL_STORAGE',
       'android.permission.READ_MEDIA_AUDIO',
+      // The Facebook SDK declares this; OwnBooks never reads the advertising ID.
+      'com.google.android.gms.permission.AD_ID',
     ],
   },
   plugins: [
@@ -77,6 +82,25 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             '@react-native-google-signin/google-signin',
             { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
           ] as [string, Record<string, string>],
+        ]
+      : []),
+    // Facebook sign-in, only when configured. No app events, no advertising ID, no auto-start:
+    // the SDK is initialised when someone taps "Continue with Facebook".
+    ...(FACEBOOK_APP_ID && FACEBOOK_CLIENT_TOKEN
+      ? [
+          [
+            'react-native-fbsdk-next',
+            {
+              appID: FACEBOOK_APP_ID,
+              clientToken: FACEBOOK_CLIENT_TOKEN,
+              displayName: 'OwnBooks',
+              scheme: `fb${FACEBOOK_APP_ID}`,
+              isAutoInitEnabled: false,
+              autoLogAppEventsEnabled: false,
+              advertiserIDCollectionEnabled: false,
+              iosUserTrackingPermission: false,
+            },
+          ] as [string, Record<string, unknown>],
         ]
       : []),
   ],
