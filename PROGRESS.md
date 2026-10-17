@@ -241,9 +241,9 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       minimum password 8, leaked-password check, confirmation + recovery templates
       (`supabase/templates/signup-code.html`, `reset-code.html`), redirect URL ownbooks://auth/callback.
       Still to do: the Facebook provider (App ID + secret, entered by the user in the dashboard)
-- [ ] Meta app: Consumer type, Facebook Login, email permission, Android package dev.ownbooks.app,
+- [x] Meta app 1419717433706997 (Development mode): Consumer type, Facebook Login, email permission, Android package dev.ownbooks.app,
       key hash `a63TPQ2ETyTeWFENibUN1beRXOg=` (EAS keystore), privacy policy + data deletion URLs;
-      App ID + client token as EAS env vars
+      App ID + client token as EAS env vars; Facebook provider enabled in Supabase (checked 2026-10-17)
 - [ ] Apple Services ID + key (after the Apple Developer account), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
 - [ ] Device checks: create account → code → library; sign in / wrong password; forgot password;
       Facebook; Google still works; same email via Google and password lands on one account
@@ -270,6 +270,9 @@ passwordless email code is gone; codes now only confirm a new account and reset 
 - [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page
 - [ ] Production email sender in Supabase (e.g. Resend)
 - [ ] Final bundle ID and legal entity; Google OAuth consent screen → In production
+- [ ] Meta app (ID 1419717433706997) → Live: privacy policy URL, data deletion URL (the account
+      deletion page), icon, category; business verification if Meta asks. Until then only accounts
+      with an app role can use Facebook sign-in
 - [ ] Play Console: store listing, data-safety form (email, usage data, diagnostics; the Facebook SDK
       is in the app for sign-in only, with app events and the advertising ID off), closed testing
       track. New personal developer accounts need a closed test with 12+ testers for 14 days
