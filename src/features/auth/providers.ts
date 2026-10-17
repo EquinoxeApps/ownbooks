@@ -1,4 +1,4 @@
-import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js';
+import { isAuthApiError, isAuthRetryableFetchError, isAuthWeakPasswordError } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from 'expo-crypto';
 import { openAuthSessionAsync } from 'expo-web-browser';
@@ -38,16 +38,16 @@ function client() {
 export function toAuthError(error: unknown, fallback: AuthErrorKey = 'errors.generic'): AuthFlowError {
   if (error instanceof AuthFlowError) return error;
   if (isAuthRetryableFetchError(error)) return new AuthFlowError('errors.offline', error);
+  // supabase-js reports a refused password as its own error class, not as an AuthApiError.
+  if (isAuthWeakPasswordError(error)) {
+    if (error.reasons.includes('pwned')) return new AuthFlowError('password.leaked', error);
+    if (error.reasons.includes('length')) return new AuthFlowError('password.tooShort', error);
+    return new AuthFlowError('password.weak', error);
+  }
   if (isAuthApiError(error)) {
     if (error.status === 429) return new AuthFlowError('errors.rateLimited', error);
     if (error.code === 'invalid_credentials') return new AuthFlowError('password.wrong', error);
     if (error.code === 'otp_expired') return new AuthFlowError('verify.invalid', error);
-    if (error.code === 'weak_password') {
-      const reasons = (error as { reasons?: string[] }).reasons ?? [];
-      if (reasons.includes('pwned')) return new AuthFlowError('password.leaked', error);
-      if (reasons.includes('length')) return new AuthFlowError('password.tooShort', error);
-      return new AuthFlowError('password.weak', error);
-    }
   }
   if (error instanceof TypeError && /network/i.test(error.message)) {
     return new AuthFlowError('errors.offline', error);

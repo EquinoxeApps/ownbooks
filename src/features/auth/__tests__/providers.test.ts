@@ -1,4 +1,4 @@
-import { AuthApiError } from '@supabase/supabase-js';
+import { AuthApiError, AuthWeakPasswordError } from '@supabase/supabase-js';
 
 const mockAuth = {
   signInWithPassword: jest.fn(),
@@ -26,8 +26,10 @@ import {
   toAuthError,
 } from '../providers';
 
-const apiError = (code: string, status = 400, extra: object = {}) =>
-  Object.assign(new AuthApiError(code, status, code), extra);
+const apiError = (code: string, status = 400) => new AuthApiError(code, status, code);
+// What supabase-js actually returns for a refused password (a separate class, not AuthApiError).
+const weak = (...reasons: ('length' | 'characters' | 'pwned')[]) =>
+  new AuthWeakPasswordError('Password is known to be weak', 422, reasons);
 
 beforeEach(() => {
   for (const fn of Object.values(mockAuth)) fn.mockReset();
@@ -72,7 +74,7 @@ describe('createAccount', () => {
 
 describe('setNewPassword', () => {
   it('maps a leaked password to its own message', async () => {
-    mockAuth.updateUser.mockResolvedValue({ error: apiError('weak_password', 422, { reasons: ['pwned'] }) });
+    mockAuth.updateUser.mockResolvedValue({ error: weak('pwned') });
     await expect(setNewPassword('longenough')).rejects.toMatchObject({ key: 'password.leaked' });
   });
 
@@ -86,7 +88,7 @@ describe('toAuthError', () => {
   it('maps rate limits, expired codes and weak passwords', () => {
     expect(toAuthError(apiError('over_request_rate_limit', 429)).key).toBe('errors.rateLimited');
     expect(toAuthError(apiError('otp_expired', 403)).key).toBe('verify.invalid');
-    expect(toAuthError(apiError('weak_password', 422, { reasons: ['length'] })).key).toBe('password.tooShort');
-    expect(toAuthError(apiError('weak_password', 422, { reasons: ['characters'] })).key).toBe('password.weak');
+    expect(toAuthError(weak('length')).key).toBe('password.tooShort');
+    expect(toAuthError(weak('characters')).key).toBe('password.weak');
   });
 });
