@@ -41,8 +41,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.READ_EXTERNAL_STORAGE',
       'android.permission.WRITE_EXTERNAL_STORAGE',
       'android.permission.READ_MEDIA_AUDIO',
-      // The Facebook SDK declares this; OwnBooks never reads the advertising ID.
+      // The Facebook SDK declares these ad, attribution and install-referrer permissions. Sign-in
+      // needs none of them and OwnBooks never tracks or advertises (checked in the built APK's manifest).
       'com.google.android.gms.permission.AD_ID',
+      'android.permission.ACCESS_ADSERVICES_AD_ID',
+      'android.permission.ACCESS_ADSERVICES_ATTRIBUTION',
+      'android.permission.ACCESS_ADSERVICES_CUSTOM_AUDIENCE',
+      'android.permission.ACCESS_ADSERVICES_TOPICS',
+      'com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE',
     ],
   },
   plugins: [

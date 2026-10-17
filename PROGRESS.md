@@ -233,7 +233,9 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       the new password is saved). Minimum 8 characters; wrong password, unconfirmed email, existing
       account, short / leaked / weak password each get their own message. Unit-tested with a mocked client
 - [x] Facebook through react-native-fbsdk-next + signInWithIdToken (access token). SDK starts only on
-      tap, no app events, no advertising ID (AD_ID permission blocked), logged out after sign-in.
+      tap, no app events, no advertising ID, logged out after sign-in. Blocked permissions the SDK
+      adds (found in build c4103406's manifest): AD_ID, ACCESS_ADSERVICES_* (Privacy Sandbox ads) and
+      the Play install-referrer binding; takes effect from the next build.
       Button hidden until EXPO_PUBLIC_FACEBOOK_APP_ID is set
 - [x] Apple on Android through Apple's web sign-in (PKCE, ownbooks://auth/callback), hidden until
       EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1. Supabase client now uses flowType pkce
