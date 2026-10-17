@@ -1,4 +1,5 @@
 import 'react-native-url-polyfill/auto';
+import './cryptoPolyfill';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';

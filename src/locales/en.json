@@ -110,6 +110,9 @@
       "codeLabel": "6-digit code",
       "newPassword": "New password",
       "submit": "Save password"
+    },
+    "facebook": {
+      "noEmail": "Your Facebook account has no email address OwnBooks can use. Add one on Facebook, or sign in with email or Google instead."
     }
   },
   "tabs": {

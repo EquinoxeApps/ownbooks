@@ -1,4 +1,10 @@
-import { isAuthApiError, isAuthRetryableFetchError, isAuthWeakPasswordError } from '@supabase/supabase-js';
+import {
+  FunctionsFetchError,
+  FunctionsHttpError,
+  isAuthApiError,
+  isAuthRetryableFetchError,
+  isAuthWeakPasswordError,
+} from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from 'expo-crypto';
 import { openAuthSessionAsync } from 'expo-web-browser';
@@ -19,7 +25,8 @@ export type AuthErrorKey =
   | 'password.tooShort'
   | 'password.leaked'
   | 'password.weak'
-  | 'createAccount.exists';
+  | 'createAccount.exists'
+  | 'facebook.noEmail';
 
 export class AuthFlowError extends Error {
   constructor(public readonly key: AuthErrorKey, cause?: unknown) {
@@ -209,12 +216,14 @@ export async function signInWithGoogle(): Promise<void> {
 }
 
 /**
- * Facebook through its SDK, then Supabase with the access token (its documented native route).
- * The SDK is configured not to log app events or collect the advertising ID, starts only when
- * the button is tapped, and is logged out straight after, so it keeps no session of its own.
+ * Facebook through its SDK. Supabase's signInWithIdToken only accepts Facebook Limited Login
+ * JWTs, which the Android SDK can't produce, so the access token goes to our facebook-sign-in
+ * Edge Function: it checks the token with Facebook and returns a one-time token hash, redeemed
+ * here for a session. The SDK doesn't log app events or collect the advertising ID, starts only
+ * when the button is tapped, and is logged out straight after, so it keeps no session of its own.
  */
 export async function signInWithFacebook(): Promise<void> {
-  const auth = client().auth;
+  const supa = client();
   if (!isFacebookSignInConfigured) throw new AuthFlowError('errors.providerUnavailable');
   const { AccessToken, LoginManager, Settings } = await import('react-native-fbsdk-next');
   let token: string | undefined;
@@ -229,11 +238,26 @@ export async function signInWithFacebook(): Promise<void> {
   }
   if (!token) throw new AuthFlowError('errors.generic');
   try {
-    const { error } = await auth.signInWithIdToken({ provider: 'facebook', token });
-    if (error) throw toAuthError(error);
+    const { data, error } = await supa.functions.invoke<{ tokenHash?: string }>('facebook-sign-in', {
+      body: { accessToken: token },
+    });
+    if (error) throw await facebookError(error);
+    if (!data?.tokenHash) throw new AuthFlowError('errors.generic');
+    const { error: verifyError } = await supa.auth.verifyOtp({ token_hash: data.tokenHash, type: 'email' });
+    if (verifyError) throw toAuthError(verifyError);
   } finally {
     LoginManager.logOut();
   }
+}
+
+/** Maps the Edge Function's { error } reply; anything unexpected is a generic failure. */
+async function facebookError(error: unknown): Promise<AuthFlowError> {
+  if (error instanceof FunctionsFetchError) return new AuthFlowError('errors.offline', error);
+  if (error instanceof FunctionsHttpError) {
+    const body = await (error.context as Response).json().catch(() => null);
+    if (body?.error === 'no_email') return new AuthFlowError('facebook.noEmail', error);
+  }
+  return new AuthFlowError('errors.generic', error);
 }
 
 /** Signs this device out only. Local files stay; the library is hidden until sign-in. */

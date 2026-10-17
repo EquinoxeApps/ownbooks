@@ -232,11 +232,19 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       (code + new password; the PASSWORD_RECOVERY event is ignored so the user is signed in only once
       the new password is saved). Minimum 8 characters; wrong password, unconfirmed email, existing
       account, short / leaked / weak password each get their own message. Unit-tested with a mocked client
-- [x] Facebook through react-native-fbsdk-next + signInWithIdToken (access token). SDK starts only on
+- [x] Facebook through react-native-fbsdk-next. signInWithIdToken failed on the device ("oidc: malformed
+      jwt"): Supabase only accepts Facebook Limited Login JWTs, which exist on iOS only. So the access
+      token goes to the `facebook-sign-in` Edge Function (verify_jwt off; publishable keys are not JWTs):
+      debug_token must be valid for our App ID, /me with appsecret_proof gives id + email, then
+      find-or-create the user and return a magic-link token hash the app redeems with verifyOtp.
+      Accounts get app_metadata.signed_up_with = facebook. Needs FACEBOOK_APP_ID / FACEBOOK_APP_SECRET
+      function secrets. Checks unit-tested (test/facebook-sign-in.test.ts). SDK starts only on
       tap, no app events, no advertising ID, logged out after sign-in. Blocked permissions the SDK
       adds (found in build c4103406's manifest): AD_ID, ACCESS_ADSERVICES_* (Privacy Sandbox ads) and
       the Play install-referrer binding; takes effect from the next build.
       Button hidden until EXPO_PUBLIC_FACEBOOK_APP_ID is set
+- [x] PKCE: React Native lacks crypto.getRandomValues / crypto.subtle, so supabase-js fell back to
+      Math.random and a "plain" challenge; src/lib/cryptoPolyfill.ts fills them in with expo-crypto
 - [x] Apple on Android through Apple's web sign-in (PKCE, ownbooks://auth/callback), hidden until
       EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1. Supabase client now uses flowType pkce
 - [x] Hosted Supabase settings applied 2026-10-17 (Management API): email confirmations on,

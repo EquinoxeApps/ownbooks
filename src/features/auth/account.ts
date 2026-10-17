@@ -14,7 +14,9 @@ const asString = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() :
 
 export function accountFromUser(user: User): LocalAccount {
   const meta = user.user_metadata ?? {};
-  const providerRaw = asString(user.app_metadata?.provider);
+  // Facebook on Android signs in through our Edge Function, which Supabase records as email.
+  const providerRaw =
+    user.app_metadata?.signed_up_with === 'facebook' ? 'facebook' : asString(user.app_metadata?.provider);
   const provider: AuthProvider =
     providerRaw === 'apple' || providerRaw === 'google' || providerRaw === 'facebook' ? providerRaw : 'email';
   return {
