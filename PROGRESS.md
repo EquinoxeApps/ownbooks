@@ -27,7 +27,7 @@ track.
 | 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
 | 3 | Full audio | ✅ MVP items done on Android (deferred items listed under "After the MVP") |
 | 4 | Ebooks | ✅ Done on Android (DRM / damaged-file import still to try on a device) |
-| 5 | Sync | 🟡 Built and unit-tested; device checks pending |
+| 5 | Sync | ✅ Done on Android (web deletion page moved to 6; activity sync after the MVP) |
 | 6 | Analytics, polish, release prep | ⬜ Not started |
 
 ## Infrastructure
@@ -42,7 +42,7 @@ track.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
 | EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/d6f98a33-8e88-414c-b4fe-3a660eac21c2 (`3e5637f`) |
+| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/29944e26-9305-4c81-a898-ff88d117fbaa (`328f2d9`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -260,7 +260,7 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       (code + new password); Facebook via the SDK and the Edge Function → library
 - [ ] Still to try: Google and email/password on the same address land on one account
 
-## Milestone 5: Sync 🟡
+## Milestone 5: Sync ✅
 
 Built 2026-10-20 (lint, typecheck, 165 unit tests green). No server migration was needed: the
 milestone 1 schema already had tombstones, stale-write rejection and server change times.
@@ -303,15 +303,31 @@ milestone 1 schema already had tombstones, stale-write rejection and server chan
       against local Supabase in CI (keyset paging, stale writes, tombstones, isolation)
 - [x] `sync-remote.test.ts` passes in CI against local Supabase (run 39476648082, commit 57ef108)
 
-Device checks (need a new EAS build). With one phone, the "other device" can be simulated by
-writing a newer position for the same book into Supabase:
-- [ ] First sync pushes the existing library (`books` / `progress` rows appear in Supabase)
-- [ ] Conflict: a newer, distant position from "another device" shows the sheet on open within a
-      few seconds; both choices work; a close one updates silently
-- [ ] Airplane mode: import, play, read; progress syncs after reconnecting (Profile: "In sync")
-- [ ] Delete from this phone → placeholder; importing the same file adopts it at the synced place
-- [ ] Remove from all devices removes it on the other device
-- [ ] Delete account removes the server rows and auth user, and clears the phone
+Device checks, 2026-10-20 on builds f881f3bf, 34f7cf3d and 29944e26. With one phone, the "other device"
+("Test iPad") was simulated by writing newer positions for the same book into Supabase:
+- [x] First sync pushed the existing library (3 books, 3 positions, the device row)
+- [x] Conflict: a newer, distant position showed the sheet on open; "Continue from Test iPad"
+      landed at the right place (21:31 = Chapter 5, 17:04 in); "Keep this phone's position"
+      re-stamped the phone's position so it won on the server; a 15 s difference updated silently.
+      From the mini-player's play button too (34f7cf3d)
+- [x] Airplane mode: played and read offline; both positions reached the server on reconnecting
+- [x] Delete from this phone → placeholder (dashed cover, Import); importing the EPUB adopted it at 89%
+- [x] Remove from all devices: tombstone and position deletion on the server within a second;
+      re-importing brought it back at 0%; a removal from "another device" removed it on the phone
+- [x] Delete account (throwaway account): auth user, device, book and position rows all gone;
+      the main account untouched
+- Found on the device and fixed:
+  - A paused, loaded book ignored a position sync took silently, so play resumed from the old
+    spot and overwrote it; the mini-player's play button skipped the conflict check (7825a83)
+  - The player reported a seek target 0.4 s off, so a paused book re-saved on unload with a new
+    timestamp (7b5e491)
+  - Android pauses JS timers in the background, so a pause from the lock screen / notification
+    only synced when the app was reopened, and the once-a-minute sync stopped with the screen
+    locked (328f2d9)
+- [x] Re-checked on 29944e26: a media-key pause with the app in the background reached the
+      server 0.3 s later
+- Known limitation: play from the lock screen, notification or a headset resumes this phone's
+  position without offering a newer one (there's no screen to ask on); that position then wins
 
 Deferred with the Activity tab ("After the MVP"): activity sync. Moved to milestone 6 with the
 rest of `/site`: the web account-deletion page (needed for the Play listing).
