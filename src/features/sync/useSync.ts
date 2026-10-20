@@ -28,17 +28,21 @@ export function useSync(db: Db, userId: string): void {
       connected = isConnected;
     });
 
-    let playingTimer: ReturnType<typeof setInterval> | undefined;
+    // Driven by the player's status updates rather than an interval: those keep arriving with the
+    // screen locked, while Android pauses JS timers in the background.
+    let lastWhilePlaying = 0;
     const player = usePlayerStore.subscribe((state, prev) => {
       if (state.bookId !== prev.bookId || (prev.playing && !state.playing)) {
         // After the controller's own save on pause / unload.
         requestSync(500);
+        return;
       }
-      if (state.playing && !playingTimer) {
-        playingTimer = setInterval(() => requestSync(0), WHILE_PLAYING_MS);
-      } else if (!state.playing && playingTimer) {
-        clearInterval(playingTimer);
-        playingTimer = undefined;
+      if (!state.playing) return;
+      const now = Date.now();
+      if (!prev.playing) lastWhilePlaying = now;
+      else if (now - lastWhilePlaying >= WHILE_PLAYING_MS) {
+        lastWhilePlaying = now;
+        requestSync(0);
       }
     });
 
@@ -46,7 +50,6 @@ export function useSync(db: Db, userId: string): void {
       appState.remove();
       network.remove();
       player();
-      clearInterval(playingTimer);
       stopSync();
     };
   }, [db, userId]);

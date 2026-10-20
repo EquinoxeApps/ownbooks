@@ -1,5 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { getNetworkStateAsync } from 'expo-network';
+import { AppState } from 'react-native';
 import { create } from 'zustand';
 
 import { deleteBookRows } from '@/db/repositories/books';
@@ -52,8 +53,21 @@ export async function startSync(database: Db, userId: string): Promise<void> {
   requestSync(0);
 }
 
-/** Asks for a sync pass soon; bursts of requests become one pass. */
+/**
+ * Asks for a sync pass soon; bursts of requests become one pass. Android pauses JS timers while
+ * the app is in the background, so a request made there (e.g. a pause from the lock screen) runs
+ * at once instead of waiting for the app to be reopened.
+ */
 export function requestSync(delayMs = 1_000): void {
+  if (AppState.currentState !== 'active') {
+    void runSync();
+    return;
+  }
+  scheduleSync(delayMs);
+}
+
+/** Retries always wait on a timer, so failures in the background can't retry in a tight loop. */
+function scheduleSync(delayMs: number): void {
   clearTimeout(timer);
   timer = setTimeout(() => void runSync(), delayMs);
 }
@@ -112,7 +126,7 @@ async function attempt(): Promise<boolean> {
     const delay = RETRY_DELAYS_MS[Math.min(failures, RETRY_DELAYS_MS.length - 1)];
     failures += 1;
     set({ status: 'error' });
-    requestSync(delay);
+    scheduleSync(delay);
     console.warn('Sync failed', error);
     return false;
   }
