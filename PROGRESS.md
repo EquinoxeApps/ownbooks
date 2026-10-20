@@ -301,8 +301,7 @@ milestone 1 schema already had tombstones, stale-write rejection and server chan
       adoption, conflict hold / keep / take, LWW, renames, remove everywhere and re-import, ebooks,
       failed pass, overlap idempotency). `supabase/tests/sync-remote.test.ts` runs the real adapter
       against local Supabase in CI (keyset paging, stale writes, tombstones, isolation)
-- [ ] `sync-remote.test.ts` hasn't run yet (CI needs a push; no Docker locally). The keyset filter
-      was checked against the hosted PostgREST: it parses (anon is then refused at the table)
+- [x] `sync-remote.test.ts` passes in CI against local Supabase (run 39476648082, commit 57ef108)
 
 Device checks (need a new EAS build). With one phone, the "other device" can be simulated by
 writing a newer position for the same book into Supabase:

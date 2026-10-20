@@ -106,7 +106,7 @@ class FakeServer {
   }
 }
 
-type Phone = { db: Db & { close(): void }; device: Device; removed: string[] };
+type Phone = { db: Db & { close(): void }; device: Device; removed: string[]; applied: string[] };
 
 let server: FakeServer;
 let phone: Phone;
@@ -116,7 +116,7 @@ let ids = 0;
 async function makePhone(id: string, name: string): Promise<Phone> {
   const db = createTestDb();
   await migrate(db);
-  return { db, device: { id, name, platform: 'android' }, removed: [] };
+  return { db, device: { id, name, platform: 'android' }, removed: [], applied: [] };
 }
 
 const sync = (p: Phone) =>
@@ -130,6 +130,7 @@ const sync = (p: Phone) =>
       p.removed.push(bookId);
       await deleteBookRows(p.db, bookId);
     },
+    positionApplied: (bookId) => p.applied.push(bookId),
   });
 
 const FP = 'a'.repeat(64);
@@ -207,6 +208,7 @@ describe('sync between two devices', () => {
     await sync(ipad);
     // The iPad keeps its own place until asked.
     expect(await getProgress(ipad.db, 'i1')).toMatchObject({ track_idx: 0, position_ms: 120_000 });
+    expect(ipad.applied).toEqual([]);
     const held = await getRemoteProgress(ipad.db, 'i1');
     expect(held).toMatchObject({ track_idx: 1, position_ms: 300_000, device_name: 'Galaxy S25+' });
 
@@ -243,6 +245,8 @@ describe('sync between two devices', () => {
     expect(await getProgress(ipad.db, 'i1')).toMatchObject({ position_ms: 140_000, device_name: 'Galaxy S25+' });
     expect(await getRemoteProgress(ipad.db, 'i1')).toBeNull();
     expect(server.progress.get(FP)?.position_ms).toBe(140_000);
+    // So a paused player on the iPad moves there too.
+    expect(ipad.applied).toEqual(['i1']);
   });
 
   it('last write wins: a newer local position is pushed, not overwritten', async () => {

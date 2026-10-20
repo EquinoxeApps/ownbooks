@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 
 import type { BookType, Db } from '@/db/types';
-import { loadBook } from '@/features/player/controller';
+import { loadBook, play } from '@/features/player/controller';
 import { findConflict } from '@/features/sync/conflict';
 import { syncBeforeOpen } from '@/features/sync/service';
 
@@ -33,6 +33,25 @@ export async function openBook(db: Db, book: Openable, opts: { autoplay?: boolea
 }
 
 let opening = false;
+
+/**
+ * Play on a loaded, paused book (the mini-player): like opening it, a newer position from
+ * another device is offered first, so resuming here can't overwrite it unasked.
+ */
+export async function resumeBook(db: Db, bookId: string): Promise<void> {
+  if (opening) return;
+  opening = true;
+  try {
+    await syncBeforeOpen();
+    if (await findConflict(db, bookId)) {
+      router.push({ pathname: '/conflict', params: { id: bookId, autoplay: '1' } });
+      return;
+    }
+    play();
+  } finally {
+    opening = false;
+  }
+}
 
 /** Shows the reader or the player for a book, without any checks. */
 export function goToBook(db: Db, book: Openable, opts: { autoplay?: boolean; replace?: boolean } = {}): void {

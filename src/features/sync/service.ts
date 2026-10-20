@@ -6,7 +6,7 @@ import { deleteBookRows } from '@/db/repositories/books';
 import * as kv from '@/db/repositories/kv';
 import type { Db } from '@/db/types';
 import { useAuthStore } from '@/features/auth/store';
-import { unload as unloadPlayer } from '@/features/player/controller';
+import { syncedPositionChanged, unload as unloadPlayer } from '@/features/player/controller';
 import { usePlayerStore } from '@/features/player/store';
 import { deleteBookFiles } from '@/lib/files';
 import { supabase } from '@/lib/supabase';
@@ -105,6 +105,7 @@ async function attempt(): Promise<boolean> {
       device: await thisDevice(database, account.id),
       newId: randomUUID,
       removeBook: (bookId) => removeBookHere(database, bookId),
+      positionApplied: (bookId) => void syncedPositionChanged(bookId),
     });
   } catch (error) {
     if (useAuthStore.getState().account?.id !== account.id) return false;

@@ -346,6 +346,34 @@ export function refreshDetails(bookId: string, title: string, author: string | n
   player?.updateLockScreenMetadata(lockScreenMetadata());
 }
 
+/**
+ * Sync took a newer position for this book from another device. A paused player moves there
+ * (without saving: the position is already stored), so pressing play doesn't resume from the
+ * old spot and overwrite the newer one. A playing player keeps going; its next save wins.
+ */
+export async function syncedPositionChanged(bookId: string): Promise<void> {
+  const p = player;
+  const { tracks, playing, loaded } = get();
+  if (!db || !p || get().bookId !== bookId || playing || !loaded) return;
+  const progress = await getProgress(db, bookId);
+  if (!progress || p !== player || get().playing) return;
+  const trackIdx = Math.min(Math.max(0, progress.track_idx ?? 0), tracks.length - 1);
+  const positionMs = progress.position_ms ?? 0;
+  const speed = clampSpeed(progress.speed ?? get().speed);
+  lastWritten = positionKey(bookId, trackIdx, positionMs, speed);
+  if (speed !== get().speed) {
+    p.setPlaybackRate(speed);
+    set({ speed });
+  }
+  if (trackIdx !== get().trackIdx) {
+    await switchTrack(trackIdx, positionMs, false);
+    return;
+  }
+  set({ positionMs });
+  updateChapter();
+  await p.seekTo(positionMs / 1000);
+}
+
 export function setSpeed(rate: number) {
   const speed = clampSpeed(rate);
   player?.setPlaybackRate(speed);

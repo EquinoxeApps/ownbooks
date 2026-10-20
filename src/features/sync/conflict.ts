@@ -8,7 +8,7 @@ import {
 } from '@/db/repositories/progress';
 import { listTracks } from '@/db/repositories/tracks';
 import type { BookRow, Db, ProgressRow, RemoteProgressRow } from '@/db/types';
-import { unload } from '@/features/player/controller';
+import { syncedPositionChanged, unload } from '@/features/player/controller';
 import { usePlayerStore } from '@/features/player/store';
 
 import { differsMeaningfully } from './merge';
@@ -29,6 +29,7 @@ export async function findConflict(db: Db, bookId: string): Promise<Conflict | n
   if (!book) return null;
   if (!local) {
     await applyRemoteProgress(db, remote);
+    await syncedPositionChanged(bookId);
     return null;
   }
   if (remote.updated_at <= local.updated_at) {
@@ -39,6 +40,7 @@ export async function findConflict(db: Db, bookId: string): Promise<Conflict | n
   const spans = tracks.map((t) => ({ durationMs: t.duration_ms }));
   if (!differsMeaningfully(book.type, spans, local, remote)) {
     await applyRemoteProgress(db, remote);
+    await syncedPositionChanged(bookId);
     return null;
   }
   return { book, local, remote };

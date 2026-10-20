@@ -2,11 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDb } from '@/db/provider';
-import { openBook } from '@/features/library/open';
+import { openBook, resumeBook } from '@/features/library/open';
 import { Cover, Icon, Text } from '@/ui';
 import { colors, fonts } from '@/ui/tokens';
 
-import { togglePlay } from './controller';
+import { pause } from './controller';
 import { fractionOf } from './position';
 import { usePlayerStore } from './store';
 
@@ -59,7 +59,7 @@ export function MiniPlayer() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={playing ? t('player.pause') : t('player.play')}
-            onPress={togglePlay}
+            onPress={() => (playing ? pause() : void resumeBook(db, bookId))}
             hitSlop={8}
             style={styles.playButton}>
             <Icon name={playing ? 'pause' : 'play'} size={20} />

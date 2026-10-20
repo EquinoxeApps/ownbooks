@@ -40,6 +40,8 @@ export type SyncDeps = {
   newId(): string;
   /** Removes a book on this device (files, then rows) after another device removed it everywhere. */
   removeBook(bookId: string): Promise<void>;
+  /** A position from another device was taken for this book (e.g. to move a paused player there). */
+  positionApplied?(bookId: string): void;
 };
 
 export type SyncResult = { pushed: number; pulled: number };
@@ -176,6 +178,8 @@ async function mergeProgress(deps: SyncDeps, r: RemoteProgress, removed: Set<str
     remote,
     thisDeviceId: deps.device.id,
   });
-  if (decision === 'apply') await applyRemoteProgress(deps.db, remote);
-  else if (decision === 'hold') await holdRemoteProgress(deps.db, remote);
+  if (decision === 'apply') {
+    await applyRemoteProgress(deps.db, remote);
+    deps.positionApplied?.(book.id);
+  } else if (decision === 'hold') await holdRemoteProgress(deps.db, remote);
 }
