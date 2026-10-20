@@ -50,10 +50,19 @@ let audioModeReady: Promise<void> | null = null;
  * timestamp, and under last-write-wins sync a stale position could then beat a newer one made
  * on another device (e.g. when the app is backgrounded with a paused book loaded).
  */
-let lastWritten: string | null = null;
+let lastWritten: WrittenPosition | null = null;
 
-const positionKey = (bookId: string, trackIdx: number, positionMs: number, speed: number) =>
-  `${bookId}:${trackIdx}:${Math.round(positionMs)}:${speed}`;
+type WrittenPosition = { bookId: string; trackIdx: number; positionMs: number; speed: number };
+
+/** After a seek the player reports a slightly different time, so tiny moves don't count. */
+const UNCHANGED_WITHIN_MS = 1_000;
+
+const unchanged = (a: WrittenPosition | null, b: WrittenPosition) =>
+  a != null &&
+  a.bookId === b.bookId &&
+  a.trackIdx === b.trackIdx &&
+  a.speed === b.speed &&
+  Math.abs(a.positionMs - b.positionMs) < UNCHANGED_WITHIN_MS;
 
 const get = usePlayerStore.getState;
 const set = usePlayerStore.setState;
@@ -136,7 +145,7 @@ export async function loadBook(database: Db, bookId: string, opts: { autoplay?: 
     return;
   }
   if (positionMs > 0) await player.seekTo(positionMs / 1000);
-  lastWritten = positionKey(bookId, trackIdx, positionMs, speed);
+  lastWritten = { bookId, trackIdx, positionMs, speed };
   restored = true;
   set({ loaded: true });
   if (opts.autoplay) play();
@@ -360,7 +369,7 @@ export async function syncedPositionChanged(bookId: string): Promise<void> {
   const trackIdx = Math.min(Math.max(0, progress.track_idx ?? 0), tracks.length - 1);
   const positionMs = progress.position_ms ?? 0;
   const speed = clampSpeed(progress.speed ?? get().speed);
-  lastWritten = positionKey(bookId, trackIdx, positionMs, speed);
+  lastWritten = { bookId, trackIdx, positionMs, speed };
   if (speed !== get().speed) {
     p.setPlaybackRate(speed);
     set({ speed });
@@ -390,9 +399,9 @@ export async function savePosition(): Promise<void> {
   const { bookId, tracks, trackIdx, positionMs, speed, loaded } = get();
   if (!db || !bookId || !loaded) return;
   lastSavedAt = Date.now();
-  const key = positionKey(bookId, trackIdx, positionMs, speed);
-  if (key === lastWritten) return;
-  lastWritten = key;
+  const position = { bookId, trackIdx, positionMs, speed };
+  if (unchanged(lastWritten, position)) return;
+  lastWritten = position;
   try {
     await saveAudioPosition(db, {
       bookId,
