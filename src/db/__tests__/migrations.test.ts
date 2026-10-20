@@ -17,6 +17,7 @@ describe('migrate', () => {
       'kv',
       'pending_ops',
       'progress',
+      'remote_progress',
       'tracks',
     ]);
     db.close();

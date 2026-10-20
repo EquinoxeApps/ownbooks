@@ -1,7 +1,8 @@
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useDb } from '@/db/provider';
+import { openBook } from '@/features/library/open';
 import { Cover, Icon, Text } from '@/ui';
 import { colors, fonts } from '@/ui/tokens';
 
@@ -12,6 +13,7 @@ import { usePlayerStore } from './store';
 /** Mini-player from the library design, shown above the tab bar while a book is loaded. */
 export function MiniPlayer() {
   const { t } = useTranslation();
+  const db = useDb();
   const bookId = usePlayerStore((s) => s.bookId);
   const title = usePlayerStore((s) => s.title);
   const playing = usePlayerStore((s) => s.playing);
@@ -41,7 +43,8 @@ export function MiniPlayer() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('player.open', { title })}
-            onPress={() => router.push('/player')}
+            // Like any open, this offers a newer position from another device first.
+            onPress={() => void openBook(db, { id: bookId, type: 'audio', on_device: 1 })}
             style={styles.open}>
             <Cover uri={coverUri} title={title} width={40} height={40} />
             <View style={styles.text}>

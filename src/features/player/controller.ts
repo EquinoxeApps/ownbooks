@@ -45,6 +45,15 @@ let lastTickAt = 0;
 /** False until the saved position is restored, so early status updates can't overwrite it. */
 let restored = false;
 let audioModeReady: Promise<void> | null = null;
+/**
+ * The position last written (or restored). Saving the same position again would give it a new
+ * timestamp, and under last-write-wins sync a stale position could then beat a newer one made
+ * on another device (e.g. when the app is backgrounded with a paused book loaded).
+ */
+let lastWritten: string | null = null;
+
+const positionKey = (bookId: string, trackIdx: number, positionMs: number, speed: number) =>
+  `${bookId}:${trackIdx}:${Math.round(positionMs)}:${speed}`;
 
 const get = usePlayerStore.getState;
 const set = usePlayerStore.setState;
@@ -127,6 +136,7 @@ export async function loadBook(database: Db, bookId: string, opts: { autoplay?: 
     return;
   }
   if (positionMs > 0) await player.seekTo(positionMs / 1000);
+  lastWritten = positionKey(bookId, trackIdx, positionMs, speed);
   restored = true;
   set({ loaded: true });
   if (opts.autoplay) play();
@@ -352,6 +362,9 @@ export async function savePosition(): Promise<void> {
   const { bookId, tracks, trackIdx, positionMs, speed, loaded } = get();
   if (!db || !bookId || !loaded) return;
   lastSavedAt = Date.now();
+  const key = positionKey(bookId, trackIdx, positionMs, speed);
+  if (key === lastWritten) return;
+  lastWritten = key;
   try {
     await saveAudioPosition(db, {
       bookId,
@@ -362,6 +375,7 @@ export async function savePosition(): Promise<void> {
       at: lastSavedAt,
     });
   } catch (error) {
+    lastWritten = null;
     console.warn('Saving position failed', error);
   }
 }
@@ -382,6 +396,7 @@ export async function unload(): Promise<void> {
   player = null;
   wasPlaying = false;
   restored = false;
+  lastWritten = null;
   lastTickAt = 0;
   set(emptyPlayerState);
 }

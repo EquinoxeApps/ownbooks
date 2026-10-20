@@ -5,6 +5,7 @@ import { useDb } from '@/db/provider';
 import { useAuthStore } from '@/features/auth/store';
 import { backfillTags } from '@/features/import/backfill';
 import { cleanupStaleImports } from '@/features/import/importer';
+import { useSync } from '@/features/sync/useSync';
 import { colors, playerColors } from '@/ui/tokens';
 
 export default function AppLayout() {
@@ -26,6 +27,8 @@ export default function AppLayout() {
   useEffect(() => {
     if (userId) void backfillTags(db, userId);
   }, [db, userId]);
+
+  useSync(db, userId);
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
@@ -82,6 +85,15 @@ export default function AppLayout() {
       />
       <Stack.Screen
         name="sort"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+        }}
+      />
+      <Stack.Screen
+        name="conflict"
         options={{
           presentation: 'formSheet',
           sheetAllowedDetents: 'fitToContents',

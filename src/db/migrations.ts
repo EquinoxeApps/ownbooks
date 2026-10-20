@@ -94,6 +94,28 @@ export const migrations: { version: number; sql: string }[] = [
     version: 2,
     sql: `ALTER TABLE books ADD COLUMN tags_read INTEGER NOT NULL DEFAULT 0;`,
   },
+  {
+    // Sync: which device a pulled position came from, and newer positions from other devices
+    // held back until the user picks one (the conflict sheet).
+    version: 3,
+    sql: `
+      ALTER TABLE progress ADD COLUMN device_id TEXT;
+      ALTER TABLE progress ADD COLUMN device_name TEXT;
+
+      CREATE TABLE remote_progress (
+        book_id     TEXT PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,
+        track_idx   INTEGER,
+        position_ms INTEGER,
+        cfi         TEXT,
+        fraction    REAL NOT NULL DEFAULT 0,
+        speed       REAL,
+        finished_at INTEGER,
+        device_id   TEXT,
+        device_name TEXT,
+        updated_at  INTEGER NOT NULL
+      );
+    `,
+  },
 ];
 
 export const LATEST_VERSION = migrations[migrations.length - 1].version;

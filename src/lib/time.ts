@@ -18,3 +18,19 @@ export function formatDurationShort(ms: number): { hours: number; minutes: numbe
   const totalMin = Math.max(0, Math.round(ms / 60_000));
   return { hours: Math.floor(totalMin / 60), minutes: totalMin % 60 };
 }
+
+/**
+ * A moment as "today", "yesterday" or a short date, plus the time, for labels such as
+ * "Today 08:12" or "12 Oct, 08:12". Callers translate "today" and "yesterday".
+ */
+export function dayAndTime(at: number, language: string, now = Date.now()): { day: string; time: string } {
+  const date = new Date(at);
+  const time = date.toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit' });
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+  if (at >= startOfToday.getTime()) return { day: 'today', time };
+  if (at >= startOfYesterday.getTime()) return { day: 'yesterday', time };
+  return { day: date.toLocaleDateString(language, { day: 'numeric', month: 'short' }), time };
+}

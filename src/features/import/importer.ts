@@ -5,6 +5,7 @@ import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
 import { findByFingerprint, insertAudioBook, insertEbook, type NewChapter } from '@/db/repositories/books';
 import type { Db } from '@/db/types';
+import { requestSync } from '@/features/sync/service';
 import { BOOKS_DIR } from '@/lib/files';
 
 import { NotAnEpubError, readEpubInfo } from './epub';
@@ -134,6 +135,11 @@ async function prepareCurrent(): Promise<void> {
     step = 'duplicate check';
     const existing = await findByFingerprint(s.db, s.userId, prepared.fingerprint);
     if (existing?.on_device) throw new ImportFailure('duplicate');
+    // The same file as a book from another device: it keeps that book's name (and its place).
+    if (existing) {
+      prepared.title = existing.title;
+      prepared.author = existing.author;
+    }
 
     if (s !== session || s.cancelled) throw new CopyCancelled();
     s.prepared = prepared;
@@ -375,7 +381,16 @@ export async function saveCurrent(): Promise<string | null> {
   const title = current.title.trim() || current.group.suggestedTitle;
 
   set({ status: 'saving' });
-  const bookId = randomUUID();
+  // Checked again now: a sync may have brought in this book from another device meanwhile.
+  // A placeholder is adopted (same id, keeps its place); a copy already here is a duplicate.
+  const match = await findByFingerprint(s.db, s.userId, prepared.fingerprint).catch(() => null);
+  if (match?.on_device) {
+    if (prepared.tmpDir.exists) prepared.tmpDir.delete();
+    s.prepared = null;
+    set({ status: 'failed', error: 'duplicate' });
+    return null;
+  }
+  const bookId = match?.id ?? randomUUID();
   const finalDir = new Directory(Paths.document, BOOKS_DIR, bookId);
   try {
     step = 'move into library';
@@ -420,6 +435,7 @@ export async function saveCurrent(): Promise<string | null> {
     return null;
   }
 
+  requestSync();
   const state = useImportStore.getState();
   set({
     savedBookIds: [...state.savedBookIds, bookId],

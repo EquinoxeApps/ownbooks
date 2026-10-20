@@ -5,8 +5,11 @@ import { StyleSheet, View } from 'react-native';
 
 import { useDb, useLiveQuery } from '@/db/provider';
 import { getLibraryItem } from '@/db/repositories/books';
-import { deleteBook, markFinished, renameBook } from '@/features/library/actions';
-import { loadBook } from '@/features/player/controller';
+import { useAuthStore } from '@/features/auth/store';
+import { pickAndImport } from '@/features/import/importer';
+import { deleteBook, markFinished, removeEverywhere, renameBook } from '@/features/library/actions';
+import { openBook } from '@/features/library/open';
+import { isBackendConfigured } from '@/lib/env';
 import { fileUri } from '@/lib/files';
 import { formatSize } from '@/lib/size';
 import { formatDurationShort } from '@/lib/time';
@@ -25,7 +28,10 @@ import {
   TextField,
 } from '@/ui';
 
-/** Book detail: edit title/author, mark as finished, delete from this phone (spec §4.2). */
+/**
+ * Book detail: edit title/author, mark as finished, delete from this phone or remove from all
+ * devices (spec §4.2, §4.7). A book only on another device explains how to import it here.
+ */
 export default function BookDetail() {
   const { t, i18n } = useTranslation();
   const db = useDb();
@@ -36,7 +42,8 @@ export default function BookDetail() {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [titleError, setTitleError] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirming, setConfirming] = useState<'phone' | 'everywhere' | null>(null);
+  const userId = useAuthStore((s) => s.account?.id ?? '');
   const [busy, setBusy] = useState(false);
 
   if (book === undefined) return <Screen>{null}</Screen>;
@@ -100,18 +107,16 @@ export default function BookDetail() {
       setEditing(false);
     });
 
-  const open = () => {
-    if (book.type === 'ebook') {
-      router.push({ pathname: '/reader/[id]', params: { id: book.id } });
-      return;
-    }
-    router.push('/player');
-    void loadBook(db, book.id);
+  const open = () => void openBook(db, book);
+
+  const importHere = async () => {
+    if (await pickAndImport(db, userId)) router.push('/import');
   };
 
   const remove = () =>
     run(async () => {
-      await deleteBook(db, book.id);
+      await (confirming === 'everywhere' ? removeEverywhere(db, book.id) : deleteBook(db, book.id));
+      setConfirming(null);
       if (router.canGoBack()) router.back();
     });
 
@@ -150,7 +155,21 @@ export default function BookDetail() {
         ))}
       </View>
 
-      {canOpen ? <Button label={openLabel} onPress={open} /> : null}
+      {canOpen ? (
+        <Button label={openLabel} onPress={open} />
+      ) : (
+        <Card style={styles.confirm}>
+          <Text variant="title" accessibilityRole="header">
+            {t('library.notOnDevice')}
+          </Text>
+          <Text variant="meta">
+            {book.last_device
+              ? t('book.notOnDeviceFrom', { device: book.last_device })
+              : t('book.notOnDeviceBody')}
+          </Text>
+          <Button label={t('book.importHere')} onPress={importHere} />
+        </Card>
+      )}
 
       {editing ? (
         <View style={styles.fields}>
@@ -178,24 +197,51 @@ export default function BookDetail() {
         <Button variant="secondary" label={t('book.edit')} onPress={startEditing} disabled={busy} />
       )}
 
-      <Button
-        variant="secondary"
-        label={finished ? t('book.startAgain') : t('book.markFinished')}
-        onPress={() => run(() => markFinished(db, book.id, !finished))}
-        disabled={busy}
-      />
+      {canOpen ? (
+        <Button
+          variant="secondary"
+          label={finished ? t('book.startAgain') : t('book.markFinished')}
+          onPress={() => run(() => markFinished(db, book.id, !finished))}
+          disabled={busy}
+        />
+      ) : null}
 
-      {confirmingDelete ? (
+      {confirming ? (
         <Card style={styles.confirm}>
           <Text variant="title" accessibilityRole="header">
-            {t('book.deleteTitle', { title: book.title })}
+            {confirming === 'everywhere'
+              ? t('book.removeEverywhereTitle', { title: book.title })
+              : t('book.deleteTitle', { title: book.title })}
           </Text>
-          <Text variant="meta">{t('book.deleteBody')}</Text>
-          <Button variant="danger-link" label={t('book.deleteConfirm')} onPress={remove} disabled={busy} />
-          <Button variant="link" label={t('common.cancel')} onPress={() => setConfirmingDelete(false)} disabled={busy} />
+          <Text variant="meta">
+            {confirming === 'everywhere'
+              ? t('book.removeEverywhereBody')
+              : isBackendConfigured
+                ? t('book.deleteBodySynced')
+                : t('book.deleteBody')}
+          </Text>
+          <Button
+            variant="danger-link"
+            label={confirming === 'everywhere' ? t('book.removeEverywhereConfirm') : t('book.deleteConfirm')}
+            onPress={remove}
+            disabled={busy}
+          />
+          <Button variant="link" label={t('common.cancel')} onPress={() => setConfirming(null)} disabled={busy} />
         </Card>
       ) : (
-        <Button variant="danger-link" label={t('book.delete')} onPress={() => setConfirmingDelete(true)} disabled={busy} />
+        <View style={styles.dangerLinks}>
+          {canOpen ? (
+            <Button variant="danger-link" label={t('book.delete')} onPress={() => setConfirming('phone')} disabled={busy} />
+          ) : null}
+          {isBackendConfigured ? (
+            <Button
+              variant="danger-link"
+              label={t('book.removeEverywhere')}
+              onPress={() => setConfirming('everywhere')}
+              disabled={busy}
+            />
+          ) : null}
+        </View>
       )}
     </Screen>
   );
@@ -211,4 +257,5 @@ const styles = StyleSheet.create({
   facts: { gap: 2 },
   fields: { gap: 12 },
   confirm: { gap: 10 },
+  dangerLinks: { gap: 8, alignItems: 'center' },
 });

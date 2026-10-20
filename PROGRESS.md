@@ -1,6 +1,6 @@
 # OwnBooks: Progress
 
-Last updated: 2026-10-16
+Last updated: 2026-10-20
 
 Source of truth for scope: [`docs/design/spec.md`](docs/design/spec.md), plus the
 interview decisions in the build plan (summarised in "Decisions" below).
@@ -27,7 +27,7 @@ track.
 | 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
 | 3 | Full audio | ✅ MVP items done on Android (deferred items listed under "After the MVP") |
 | 4 | Ebooks | ✅ Done on Android (DRM / damaged-file import still to try on a device) |
-| 5 | Sync | ⬜ Not started |
+| 5 | Sync | 🟡 Built and unit-tested; device checks pending |
 | 6 | Analytics, polish, release prep | ⬜ Not started |
 
 ## Infrastructure
@@ -260,17 +260,62 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       (code + new password); Facebook via the SDK and the Edge Function → library
 - [ ] Still to try: Google and email/password on the same address land on one account
 
-## Milestone 5: Sync ⬜
+## Milestone 5: Sync 🟡
 
+Built 2026-10-20 (lint, typecheck, 165 unit tests green). No server migration was needed: the
+milestone 1 schema already had tombstones, stale-write rejection and server change times.
 - [x] Fingerprints (SHA-256 of size + first 1 MB + last 1 MB; multi-file = hash of track hashes):
       computed at audio import since milestone 2
-- [ ] Sync engine: device upsert, push dirty rows / pending ops, pull since cursor, last write wins
-- [ ] Triggers: foreground, book open/close, pause, ~60 s during playback, reconnect
-- [ ] "Not on this device" placeholders + adoption on import
-- [ ] Conflict sheet ("You're further ahead on your iPad")
-- [ ] Remove from all devices (tombstone)
-- [ ] Profile: "In sync" status
-- [ ] Delete account: Edge Function + in-app confirmation + web deletion page
+- [x] Sync engine (`src/features/sync/engine.ts`): upsert this device, push queued removals, dirty
+      books and dirty positions, then pull books and positions since per-account cursors. Last write
+      wins by client timestamp (the server drops older writes). The pull cursor is the server change
+      time with a fingerprint tiebreak, re-reading a 5 s overlap (merging is idempotent). Rows are
+      marked clean only if unchanged since they were read. Device ids are per account (a device row
+      belongs to one user). Only `remote.ts` touches Supabase tables
+- [x] Runner (`service.ts`): one pass at a time, requests coalesced, silent retries with backoff
+      (5 s → 5 min), skipped offline. Triggers (`useSync.ts`): start, foreground / background,
+      reconnect, book loaded or closed, pause, every 60 s while playing, reader closed, rename /
+      finish / import / remove, and a short wait (≤ 1.5 s) for a fresh pull before a book opens
+- [x] Fixed a last-write-wins hazard: the player re-saved an unchanged position on every
+      backgrounding with a new timestamp, which would have beaten a newer position from another
+      device. The player and the reader now save only positions that changed
+- [x] "Not on this device" placeholders (design: dashed cover, "Last read on <device> · 33%",
+      Import). Tapping one opens book detail, which explains and offers Import / Remove from all
+      devices. Importing the same file adopts the placeholder (same id, keeps the synced place)
+- [x] Delete from this phone now leaves a placeholder (files gone, place kept); without a backend
+      configured it removes the book entirely as before
+- [x] Conflict sheet (design: sync conflict): a newer position from another device that's more
+      than 30 s (audio) or ~0.2% of the book (ebook) away is held in `remote_progress` and offered
+      when the book is opened (library, Continue card, book detail, mini-player). "Continue from
+      <device>" or "Keep this phone's position" (re-stamped so it wins everywhere). Small
+      differences, or a book this phone hasn't moved, update silently
+- [x] Remove from all devices (book detail): queued op → tombstone + position deleted on the
+      server; other devices delete their copy when they sync. A later import brings it back
+- [x] Profile: Sync section ("In sync", "Syncing…", "Waiting to sync", "Offline", "Couldn't sync")
+      with the last sync time; tapping it syncs now. Sign-out first tries a final push (≤ 3 s)
+- [x] Delete account: `delete-account` Edge Function (verifies the session token, deletes the auth
+      user; all rows cascade), deployed 2026-10-20 with verify_jwt off because it checks the token
+      itself (missing / forged tokens get 401). In-app confirmation screen from Profile; the phone's
+      books and rows are removed only after the server deletion succeeds
+- [x] Tests: merge rules, and a two-device simulation against an in-memory server (placeholders,
+      adoption, conflict hold / keep / take, LWW, renames, remove everywhere and re-import, ebooks,
+      failed pass, overlap idempotency). `supabase/tests/sync-remote.test.ts` runs the real adapter
+      against local Supabase in CI (keyset paging, stale writes, tombstones, isolation)
+- [ ] `sync-remote.test.ts` hasn't run yet (CI needs a push; no Docker locally). The keyset filter
+      was checked against the hosted PostgREST: it parses (anon is then refused at the table)
+
+Device checks (need a new EAS build). With one phone, the "other device" can be simulated by
+writing a newer position for the same book into Supabase:
+- [ ] First sync pushes the existing library (`books` / `progress` rows appear in Supabase)
+- [ ] Conflict: a newer, distant position from "another device" shows the sheet on open within a
+      few seconds; both choices work; a close one updates silently
+- [ ] Airplane mode: import, play, read; progress syncs after reconnecting (Profile: "In sync")
+- [ ] Delete from this phone → placeholder; importing the same file adopts it at the synced place
+- [ ] Remove from all devices removes it on the other device
+- [ ] Delete account removes the server rows and auth user, and clears the phone
+
+Deferred with the Activity tab ("After the MVP"): activity sync. Moved to milestone 6 with the
+rest of `/site`: the web account-deletion page (needed for the Play listing).
 
 ## Milestone 6: Analytics, polish, release prep ⬜
 
@@ -279,7 +324,8 @@ passwordless email code is gone; codes now only confirm a new account and reset 
 - [ ] Event wrapper that rejects any book data; events from the spec + onboarding property
 - [ ] Storage screen (per book + total)
 - [ ] Empty and error states, accessibility pass (VoiceOver / TalkBack)
-- [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page
+- [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page (sign in, then call the
+      already deployed `delete-account` Edge Function)
 - [ ] Production email sender in Supabase (e.g. Resend)
 - [ ] Final bundle ID and legal entity; Google OAuth consent screen → In production
 - [ ] Meta app (ID 1419717433706997) → Live: privacy policy URL, data deletion URL (the account

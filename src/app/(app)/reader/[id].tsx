@@ -14,6 +14,7 @@ import { commandScript, parseEvent, type ReaderCommand } from '@/features/reader
 import { toReaderStyle, useReaderSettings } from '@/features/reader/settings';
 import { emptyReaderState, useReaderStore, type ReaderLocation } from '@/features/reader/store';
 import { READER_HTML } from '@/features/reader/web/readerHtml.generated';
+import { requestSync } from '@/features/sync/service';
 import { fileUri } from '@/lib/files';
 import { fonts, IconButton, Text } from '@/ui';
 
@@ -39,6 +40,8 @@ export default function Reader() {
   const [error, setError] = useState<'missingFile' | 'openFailed' | null>(null);
   const [rendered, setRendered] = useState(false);
   const pending = useRef<ReaderLocation | null>(null);
+  // Re-saving the same CFI (e.g. the restore on open) would only give it a newer sync timestamp.
+  const savedCfi = useRef<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The style at the moment the page asks to open; later changes go through setStyle.
   const styleRef = useRef(style);
@@ -53,7 +56,9 @@ export default function Reader() {
     saveTimer.current = null;
     const loc = pending.current;
     pending.current = null;
-    if (loc) void saveEbookPosition(db, { bookId: id, cfi: loc.cfi, fraction: loc.fraction, at: Date.now() });
+    if (!loc || loc.cfi === savedCfi.current) return;
+    savedCfi.current = loc.cfi;
+    void saveEbookPosition(db, { bookId: id, cfi: loc.cfi, fraction: loc.fraction, at: Date.now() });
   }, [db, id]);
 
   useEffect(() => {
@@ -71,6 +76,7 @@ export default function Reader() {
         return;
       }
       await markOpened(db, id, Date.now());
+      savedCfi.current = progress?.cfi ?? null;
       setOpened({ url, cfi: progress?.cfi ?? null, title: book.title });
     })();
     useReaderStore.setState({ ...emptyReaderState, bookId: id, send });
@@ -81,6 +87,7 @@ export default function Reader() {
       cancelled = true;
       sub.remove();
       flush();
+      requestSync();
       useReaderStore.setState(emptyReaderState);
     };
   }, [db, id, send, flush]);

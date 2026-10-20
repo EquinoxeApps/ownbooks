@@ -45,4 +45,10 @@ export type ProgressRow = {
   finished_at: number | null;
   updated_at: number;
   dirty: number;
+  /** Set when the position was pulled from another device; null for this device's own writes. */
+  device_id: string | null;
+  device_name: string | null;
 };
+
+/** A newer position from another device, waiting for the user to choose it or keep their own. */
+export type RemoteProgressRow = Omit<ProgressRow, 'dirty'>;

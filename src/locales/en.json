@@ -157,7 +157,12 @@
     "more": "Details for {{title}}",
     "continueReading": "Continue reading {{title}}",
     "continueReadingShort": "Continue reading",
-    "percentRead": "{{percent}}% read"
+    "percentRead": "{{percent}}% read",
+    "importHere": "Import",
+    "placeholderHint": "Shows how to continue this book on this phone.",
+    "lastReadOn": "Last read on {{device}} · {{percent}}%",
+    "lastListenedOn": "Last listened on {{device}} · {{percent}}%",
+    "percentDone": "{{percent}}% done"
   },
   "activity": {
     "title": "Activity",
@@ -176,7 +181,38 @@
     "terms": "Terms",
     "signOut": "Sign out",
     "signOutNote": "Your books stay on this phone and come back when you sign in again.",
-    "version": "Version {{version}}"
+    "version": "Version {{version}}",
+    "deleteAccount": "Delete account",
+    "sync": {
+      "title": "Sync",
+      "states": {
+        "inSync": "In sync",
+        "syncing": "Syncing…",
+        "waiting": "Waiting to sync",
+        "offline": "Offline",
+        "error": "Couldn’t sync"
+      },
+      "thisPhone": "This phone",
+      "last": "Synced: {{when}}",
+      "never": "Not synced yet",
+      "syncNowHint": "Syncs now.",
+      "note": "Your place and book details sync between your devices. Book files never leave the device."
+    },
+    "delete": {
+      "title": "Delete your account?",
+      "lead": "This can’t be undone. Deleting your account removes:",
+      "items": {
+        "account": "Your OwnBooks account and sign-in",
+        "synced": "Your synced library and reading and listening positions, on every device",
+        "phone": "The books you imported into OwnBooks on this phone"
+      },
+      "originals": "Your original files (where you imported them from) aren’t touched.",
+      "keep": "Keep my account",
+      "confirm": "Delete my account",
+      "deleting": "Deleting…",
+      "offline": "You’re offline. Connect to the internet to delete your account.",
+      "failed": "Your account couldn’t be deleted. Please try again."
+    }
   },
   "import": {
     "foundAudiobook": "We found your audiobook.",
@@ -282,7 +318,15 @@
     "deleteConfirm": "Delete",
     "notFound": "This book isn’t in your library any more.",
     "read": "Read",
-    "continueReading": "Continue reading"
+    "continueReading": "Continue reading",
+    "deleteBodySynced": "This removes the book’s files from this phone. It stays in your library as “Not on this device”, with your place, so you can pick it up on your other devices or import it here again. Your original files aren’t touched.",
+    "removeEverywhere": "Remove from all devices",
+    "removeEverywhereTitle": "Remove {{title}} from all devices?",
+    "removeEverywhereBody": "The book and your place leave your library on every device, and its copies in OwnBooks are deleted when each device next syncs. Your original files aren’t touched.",
+    "removeEverywhereConfirm": "Remove everywhere",
+    "notOnDeviceBody": "This book’s file isn’t on this phone. Only your place syncs, never the file, so import the same file here to continue.",
+    "notOnDeviceFrom": "You were last on {{device}}. Only your place syncs, never the file, so import the same file here to continue.",
+    "importHere": "Import the file"
   },
   "reader": {
     "back": "Back to library",
@@ -323,6 +367,23 @@
     "fonts": {
       "literata": "Literata",
       "publisher": "Book’s font"
+    }
+  },
+  "sync": {
+    "conflict": {
+      "ahead": "You’re further ahead on {{device}}.",
+      "newer": "You were on {{device}} more recently.",
+      "question": "Continue from {{where}}?",
+      "percent": "{{percent}}%",
+      "chapter": "Chapter {{number}}",
+      "otherDevice": "another device",
+      "recommended": "Recommended",
+      "continue": "Continue from {{device}}",
+      "keep": "Keep this phone’s position",
+      "today": "Today {{time}}",
+      "yesterday": "Yesterday {{time}}",
+      "noteAudio": "Only your position is synced. The audiobook file never leaves this phone.",
+      "noteEbook": "Only your position is synced. The ebook file never leaves this phone."
     }
   }
 }

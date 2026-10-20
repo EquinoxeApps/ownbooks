@@ -8,8 +8,8 @@ import { useDb, useLiveQuery } from '@/db/provider';
 import { listLibrary, type LibraryFilter, type LibraryItem } from '@/db/repositories/books';
 import { useAuthStore } from '@/features/auth/store';
 import { pickAndImport } from '@/features/import/importer';
+import { openBook as open } from '@/features/library/open';
 import { useLibraryPrefs } from '@/features/library/store';
-import { loadBook } from '@/features/player/controller';
 import { fileUri } from '@/lib/files';
 import { formatDurationShort } from '@/lib/time';
 import {
@@ -19,6 +19,7 @@ import {
   colors,
   Cover,
   fonts,
+  Icon,
   IconButton,
   ProgressBar,
   Text,
@@ -57,15 +58,7 @@ export default function Library() {
     if (await pickAndImport(db, userId)) router.push('/import');
   };
 
-  const openBook = (book: LibraryItem, autoplay = false) => {
-    if (!book.on_device) return;
-    if (book.type === 'ebook') {
-      router.push({ pathname: '/reader/[id]', params: { id: book.id } });
-      return;
-    }
-    router.push('/player');
-    void loadBook(db, book.id, { autoplay });
-  };
+  const openBook = (book: LibraryItem, autoplay = false) => void open(db, book, { autoplay });
 
   const openDetails = (book: LibraryItem) => router.push({ pathname: '/book/[id]', params: { id: book.id } });
 
@@ -162,9 +155,13 @@ export default function Library() {
             </View>
           </View>
         }
-        renderItem={({ item }) => (
-          <BookRow book={item} onPress={() => openBook(item)} onDetails={() => openDetails(item)} />
-        )}
+        renderItem={({ item }) =>
+          item.on_device ? (
+            <BookRow book={item} onPress={() => openBook(item)} onDetails={() => openDetails(item)} />
+          ) : (
+            <PlaceholderRow book={item} onPress={() => openDetails(item)} onImport={startImport} />
+          )
+        }
         ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
       />
     </SafeAreaView>
@@ -238,7 +235,7 @@ function BookRow({ book, onPress, onDetails }: { book: LibraryItem; onPress: () 
           <Text variant="title" numberOfLines={2}>
             {book.title}
           </Text>
-          <Text variant="meta">{book.on_device ? meta : t('library.notOnDevice')}</Text>
+          <Text variant="meta">{meta}</Text>
           <View style={styles.progressRow}>
             <ProgressBar value={book.fraction ?? 0} />
             <Text variant="caption" color={colors.primaryDark} style={styles.pct}>
@@ -248,6 +245,37 @@ function BookRow({ book, onPress, onDetails }: { book: LibraryItem; onPress: () 
         </View>
       </Pressable>
       <IconButton icon="more" accessibilityLabel={details} color={colors.muted} iconSize={20} onPress={onDetails} />
+    </View>
+  );
+}
+
+/** A book known from another device (design: library, "Not on this device"). */
+function PlaceholderRow({ book, onPress, onImport }: { book: LibraryItem; onPress: () => void; onImport: () => void }) {
+  const { t } = useTranslation();
+  const pct = Math.round((book.fraction ?? 0) * 100);
+  const last = book.last_device
+    ? t(book.type === 'ebook' ? 'library.lastReadOn' : 'library.lastListenedOn', { device: book.last_device, percent: pct })
+    : t('library.percentDone', { percent: pct });
+  return (
+    <View style={styles.rowWrap}>
+      <Pressable
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`${book.title}, ${t('library.notOnDevice')}, ${last}`}
+        accessibilityHint={t('library.placeholderHint')}
+        onPress={onPress}>
+        <View style={styles.placeholderCover}>
+          <Icon name="cloud" size={24} color={colors.muted} />
+        </View>
+        <View style={styles.rowText}>
+          <Text variant="title" numberOfLines={2}>
+            {book.title}
+          </Text>
+          <Text variant="meta">{t('library.notOnDevice')}</Text>
+          <Text variant="caption">{last}</Text>
+        </View>
+      </Pressable>
+      <Button variant="secondary" compact label={t('library.importHere')} onPress={onImport} />
     </View>
   );
 }
@@ -285,4 +313,14 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 4 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
   pct: { fontFamily: fonts.bold },
+  placeholderCover: {
+    width: 60,
+    height: 84,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.dashed,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
