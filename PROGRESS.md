@@ -365,8 +365,9 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
         old package once a build of the new ID signs in
   - [x] Device check: Google and Facebook sign-in on a build of the new package (build 707af67f,
         Galaxy S25+, 2026-10-23)
-  - [ ] Remove the `dev.ownbooks.app` leftovers: old Google iOS + Android clients, old Firebase apps,
-        old package in the Meta app
+  - [ ] Remove the `dev.ownbooks.app` leftovers (old app uninstalled from the S25+ on 2026-10-23):
+        old Google iOS + Android clients, old Firebase apps,
+        old package in the Meta app, old iOS client ID in Supabase's Google provider
 - [ ] After the first Play upload: add Play App Signing's SHA-1 to the Firebase / Google Android
       client and its key hash to the Meta app (apps installed from Play are signed with Google's key)
 - [ ] Google OAuth consent screen → In production
