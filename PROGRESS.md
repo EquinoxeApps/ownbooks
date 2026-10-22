@@ -40,7 +40,7 @@ track.
 | CI | GitHub Actions: lint, typecheck, Jest, RLS tests against local Supabase (all green) |
 | Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Apps org (Pro), eu-central-1 |
 | Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
-| Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added. Apps for `app.equinoxe.ownbooks` still to register |
+| Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added. Android (`1:469680403831:android:a59794aea3d32607e39d72`, same SHA-1) and iOS (`1:469680403831:ios:631a9f85c3ec9a66e39d72`) apps for `app.equinoxe.ownbooks` added 2026-10-23 |
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients (iOS and Android for `dev.ownbooks.app`; new ones for `app.equinoxe.ownbooks` still to create; the web client used by Supabase stays) |
 | EAS | `@agencyequinox/ownbooks`, moving to the `equinoxe-apps` organization (`@equinoxe-apps/ownbooks`); env vars set for development / preview / production |
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
@@ -352,7 +352,8 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
   - [ ] Expo project transferred to `equinoxe-apps`, then `owner` in `app.config.ts` updated
   - [ ] EAS Android build credentials for the new package use the existing keystore (same SHA-1);
         no build of the new package until then, or EAS generates a new key
-  - [ ] Firebase `ownbooksapp`: Android app (+ SHA-1) and iOS app for the new ID
+  - [x] Firebase `ownbooksapp`: Android app (+ SHA-1) and iOS app for the new ID (Firebase did not
+        create OAuth clients for them)
   - [ ] Google Cloud: Android and iOS OAuth clients for the new ID; new iOS client ID and URL
         scheme in `.env` and the three EAS environments; iOS client ID added to Supabase's Google
         provider (authorized client IDs)
