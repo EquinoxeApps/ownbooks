@@ -351,8 +351,8 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
 - [ ] Move to `app.equinoxe.ownbooks` before the first upload:
   - [x] Expo account renamed `agencyequinox` → `equinoxe-apps` (no transfer needed), `owner` in
         `app.config.ts` updated
-  - [ ] EAS Android build credentials for the new package use the existing keystore (same SHA-1);
-        no build of the new package until then, or EAS generates a new key
+  - [x] EAS Android build credentials for the new package use the existing keystore (same SHA-1;
+        keystore `3e80a836…` attached as the default on 2026-10-23)
   - [x] Firebase `ownbooksapp`: Android app (+ SHA-1) and iOS app for the new ID (Firebase did not
         create OAuth clients for them)
   - [x] Google Cloud: Android (`469680403831-0oqq…`, package + same SHA-1) and iOS
