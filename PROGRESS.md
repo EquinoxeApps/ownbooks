@@ -352,7 +352,7 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
 - [ ] Event wrapper that rejects any book data; events from the spec + onboarding property
 - [ ] Storage screen (per book + total)
 - [ ] Empty and error states, accessibility pass (VoiceOver / TalkBack)
-- [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page (sign in, then call the
+- [x] GitHub Pages `/site`: privacy policy, terms, account deletion page (sign in, then call the
       already deployed `delete-account` Edge Function)
   - [x] Pages written (2026-10-23): `site/privacy`, `site/terms`, `site/delete-account` (email +
         password and whichever OAuth providers Supabase has on; email fallback), no cookies or
@@ -362,9 +362,13 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
   - [x] Texts approved by the user; live at https://equinoxeapps.github.io/ownbooks/ (Pages from the
         workflow, 2026-10-23); `delete-account` v2 deployed (CORS checked: site origin allowed,
         others not, no session → 401); deletion page added to Supabase's redirect URLs; Site URL set to the site (was localhost:3000)
-  - [ ] Meta app: privacy policy, terms and data deletion URLs (Meta also wants the 1024×1024 app
-        icon and a category before it saves them)
-  - [ ] Test a deletion on the web page with a throwaway account (user)
+  - [x] Meta app: privacy policy, terms and data deletion URLs point at the pages; app icon,
+        category Entertainment, contact email updated by the user (checked 2026-10-23)
+  - [x] Deletion on the web page with a throwaway email + password account (2026-10-23): web
+        sign-in, function deleted the user (Supabase log `user_deleted`, referer the site); no
+        auth, identity, device, book, progress or activity rows left
+  - [ ] Later: password reset by code on the deletion page (today: reset in the app, or the email
+        fallback)
 - [ ] Production email sender in Supabase (e.g. Resend)
 - [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
       `app.equinoxe.ownbooks`; the app config default switched
