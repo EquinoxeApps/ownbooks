@@ -40,8 +40,8 @@ track.
 | CI | GitHub Actions: lint, typecheck, Jest, RLS tests against local Supabase (all green) |
 | Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Apps org (Pro), eu-central-1 |
 | Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
-| Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added. Android (`1:469680403831:android:a59794aea3d32607e39d72`, same SHA-1) and iOS (`1:469680403831:ios:631a9f85c3ec9a66e39d72`) apps for `app.equinoxe.ownbooks` added 2026-10-23 |
-| Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients (iOS and Android for `dev.ownbooks.app`, and for `app.equinoxe.ownbooks` since 2026-10-23; the web client used by Supabase stays; the old pair can go once builds of the new ID sign in) |
+| Firebase | Project `ownbooksapp`; Android (`1:469680403831:android:a59794aea3d32607e39d72`, SHA-1 added) and iOS (`1:469680403831:ios:631a9f85c3ec9a66e39d72`) apps for `app.equinoxe.ownbooks` |
+| Google OAuth | Project `ownbooksapp`: consent screen in Testing mode; web client "OwnBooks (Supabase)" (`…v75u`), Android (`…0oqq`, package + SHA-1) and iOS (`…a7nl`) clients for `app.equinoxe.ownbooks` |
 | EAS | `@equinoxe-apps/ownbooks` (the personal account `agencyequinox` was renamed to `equinoxe-apps` on 2026-10-23; same account, keystore and env vars); env vars set for development / preview / production |
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
 | Apple Developer | Enrolment as an organization in progress |
@@ -366,9 +366,8 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
   - [x] Device check: Google and Facebook sign-in on a build of the new package (build 707af67f,
         Galaxy S25+, 2026-10-23)
   - [x] `dev.ownbooks.app` leftovers removed on 2026-10-23: old app uninstalled from the S25+, old
-        package dropped from the Meta app, old iOS client ID dropped from Supabase's Google provider
-  - [ ] Still to remove by hand: old Google OAuth clients "OwnBooks iOS" (`j53r…`) and "OwnBooks
-        Android" (`l1mm…`), and the two old `dev.ownbooks.app` apps in Firebase
+        package dropped from the Meta app, old iOS client ID dropped from Supabase's Google provider,
+        old Google OAuth clients (`j53r…`, `l1mm…`) and old Firebase apps deleted
 - [ ] After the first Play upload: add Play App Signing's SHA-1 to the Firebase / Google Android
       client and its key hash to the Meta app (apps installed from Play are signed with Google's key)
 - [ ] Google OAuth consent screen → In production
