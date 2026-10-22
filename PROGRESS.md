@@ -359,7 +359,9 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
   - [x] New iOS client ID and URL scheme in `.env` and the three EAS environments
   - [x] New iOS client ID added to Supabase's Google provider (authorized client IDs, after the
         web and old iOS clients)
-  - [ ] Meta app: Android package name → `app.equinoxe.ownbooks` (key hash unchanged)
+  - [x] Meta app ("audioread"): package `app.equinoxe.ownbooks` added next to `dev.ownbooks.app`,
+        class name `app.equinoxe.ownbooks.MainActivity`, key hash unchanged (2026-10-23). Remove the
+        old package once a build of the new ID signs in
   - [ ] Device check: Google and Facebook sign-in on a build of the new package
 - [ ] After the first Play upload: add Play App Signing's SHA-1 to the Firebase / Google Android
       client and its key hash to the Meta app (apps installed from Play are signed with Google's key)
