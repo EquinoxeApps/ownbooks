@@ -41,7 +41,7 @@ track.
 | Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Apps org (Pro), eu-central-1 |
 | Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
 | Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added. Android (`1:469680403831:android:a59794aea3d32607e39d72`, same SHA-1) and iOS (`1:469680403831:ios:631a9f85c3ec9a66e39d72`) apps for `app.equinoxe.ownbooks` added 2026-10-23 |
-| Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients (iOS and Android for `dev.ownbooks.app`; new ones for `app.equinoxe.ownbooks` still to create; the web client used by Supabase stays) |
+| Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients (iOS and Android for `dev.ownbooks.app`, and for `app.equinoxe.ownbooks` since 2026-10-23; the web client used by Supabase stays; the old pair can go once builds of the new ID sign in) |
 | EAS | `@agencyequinox/ownbooks`, moving to the `equinoxe-apps` organization (`@equinoxe-apps/ownbooks`); env vars set for development / preview / production |
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
 | Apple Developer | Enrolment as an organization in progress |
@@ -354,9 +354,10 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
         no build of the new package until then, or EAS generates a new key
   - [x] Firebase `ownbooksapp`: Android app (+ SHA-1) and iOS app for the new ID (Firebase did not
         create OAuth clients for them)
-  - [ ] Google Cloud: Android and iOS OAuth clients for the new ID; new iOS client ID and URL
-        scheme in `.env` and the three EAS environments; iOS client ID added to Supabase's Google
-        provider (authorized client IDs)
+  - [x] Google Cloud: Android (`469680403831-0oqq…`, package + same SHA-1) and iOS
+        (`469680403831-a7nl…`) OAuth clients for the new ID (2026-10-23)
+  - [x] New iOS client ID and URL scheme in `.env` and the three EAS environments
+  - [ ] New iOS client ID added to Supabase's Google provider (authorized client IDs)
   - [ ] Meta app: Android package name → `app.equinoxe.ownbooks` (key hash unchanged)
   - [ ] Device check: Google and Facebook sign-in on a build of the new package
 - [ ] After the first Play upload: add Play App Signing's SHA-1 to the Firebase / Google Android
