@@ -361,7 +361,7 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
         for forks)
   - [x] Texts approved by the user; live at https://equinoxeapps.github.io/ownbooks/ (Pages from the
         workflow, 2026-10-23); `delete-account` v2 deployed (CORS checked: site origin allowed,
-        others not, no session → 401); deletion page added to Supabase's redirect URLs
+        others not, no session → 401); deletion page added to Supabase's redirect URLs; Site URL set to the site (was localhost:3000)
   - [ ] Meta app: privacy policy, terms and data deletion URLs (Meta also wants the 1024×1024 app
         icon and a category before it saves them)
   - [ ] Test a deletion on the web page with a throwaway account (user)
