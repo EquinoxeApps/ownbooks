@@ -44,7 +44,7 @@ track.
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode; web client "OwnBooks (Supabase)" (`…v75u`), Android (`…0oqq`, package + SHA-1) and iOS (`…a7nl`) clients for `app.equinoxe.ownbooks` |
 | EAS | `@equinoxe-apps/ownbooks` (the personal account `agencyequinox` was renamed to `equinoxe-apps` on 2026-10-23; same account, keystore and env vars); env vars set for development / preview / production |
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
-| Apple Developer | Enrolment as an organization in progress |
+| Apple Developer | Organization account approved (2026-10-23), AB Equinoxe Marketing Oy |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
 | Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/707af67f-fdb5-4b46-b6a0-34635d7fb46e (`890b63a`, first build of `app.equinoxe.ownbooks`; APK signer SHA-1 checked: 6B:AD:…:5C:E8) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
@@ -258,7 +258,7 @@ passwordless email code is gone; codes now only confirm a new account and reset 
 - [x] Meta app 1419717433706997 (Development mode): Consumer type, Facebook Login, email permission, Android package dev.ownbooks.app,
       key hash `a63TPQ2ETyTeWFENibUN1beRXOg=` (EAS keystore), privacy policy + data deletion URLs;
       App ID + client token as EAS env vars; Facebook provider enabled in Supabase (checked 2026-10-17)
-- [ ] Apple Services ID + key (after the Apple Developer account), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
+- [ ] Apple Services ID + key (Apple Developer account approved 2026-10-23), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
 - [x] Device checks (builds c4103406 and d6f98a33, 2026-10-17): breached password refused with its own
       message; create account → code → library; sign in and wrong-password message; forgot password
       (code + new password); Facebook via the SDK and the Edge Function → library
@@ -392,8 +392,6 @@ Deferred on 2026-10-16 to reach the MVP sooner:
 
 ## Open items / waiting on
 
-- **Apple Developer account** ($99/yr): enrolling as an organization; needed for any iPhone build
-  and Sign in with Apple.
 - **Production email sender** (e.g. Resend or Postmark): Supabase's built-in sender is for testing only,
   and only sends a few emails an hour; sign-up and reset codes make this more pressing.
 - **Play Console ownership** move to stores@equinoxe.app.
