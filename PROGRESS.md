@@ -262,10 +262,12 @@ passwordless email code is gone; codes now only confirm a new account and reset 
 - [x] Apple App ID `app.equinoxe.ownbooks` (Sign in with Apple, primary) and Services ID
       `app.equinoxe.ownbooks.signin` (domain `ukqhhjlrthzlulxniqqu.supabase.co`, return URL
       `…/auth/v1/callback`) registered 2026-10-23; Team ID `K447M735N4`
-- [ ] Sign in with Apple key (.p8, kept in the password manager) → client secret with
-      `node scripts/apple-client-secret.mjs` → Supabase Apple provider (client IDs
-      `app.equinoxe.ownbooks.signin,app.equinoxe.ownbooks`), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1.
-      **The secret expires after 6 months: renew it before then** (date printed by the script)
+- [x] Sign in with Apple key `99KQU36XP2` (.p8 kept in the password manager) → client secret with
+      `node scripts/apple-client-secret.mjs --key-id 99KQU36XP2 --p8 <file>` → Supabase Apple provider
+      on (client IDs `app.equinoxe.ownbooks.signin,app.equinoxe.ownbooks`); EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
+      in the three EAS environments (2026-10-23). Apple's authorize page accepts the Services ID.
+      **The secret expires on 2027-04-20: generate a new one and paste it into Supabase before then**
+- [ ] Device check: Apple sign-in on Android (web flow) lands in the library
 - [x] Device checks (builds c4103406 and d6f98a33, 2026-10-17): breached password refused with its own
       message; create account → code → library; sign in and wrong-password message; forgot password
       (code + new password); Facebook via the SDK and the Edge Function → library
@@ -357,10 +359,12 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
         third-party requests (supabase-js vendored); `.github/workflows/pages.yml` deploys `site/`
   - [x] `delete-account` answers CORS for `https://equinoxeapps.github.io` (`WEB_ORIGINS` secret
         for forks)
-  - [ ] User review of the texts, then: push, enable Pages, deploy the function, add
-        `https://equinoxeapps.github.io/ownbooks/delete-account/` to Supabase's redirect URLs,
-        point the Meta app's privacy policy and data deletion URLs at the new pages, test a
-        deletion with a throwaway account
+  - [x] Texts approved by the user; live at https://equinoxeapps.github.io/ownbooks/ (Pages from the
+        workflow, 2026-10-23); `delete-account` v2 deployed (CORS checked: site origin allowed,
+        others not, no session → 401); deletion page added to Supabase's redirect URLs
+  - [ ] Meta app: privacy policy, terms and data deletion URLs (Meta also wants the 1024×1024 app
+        icon and a category before it saves them)
+  - [ ] Test a deletion on the web page with a throwaway account (user)
 - [ ] Production email sender in Supabase (e.g. Resend)
 - [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
       `app.equinoxe.ownbooks`; the app config default switched
