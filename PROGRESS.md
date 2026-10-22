@@ -46,7 +46,7 @@ track.
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
 | Apple Developer | Enrolment as an organization in progress |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/29944e26-9305-4c81-a898-ff88d117fbaa (`328f2d9`) |
+| Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/707af67f-fdb5-4b46-b6a0-34635d7fb46e (`890b63a`, first build of `app.equinoxe.ownbooks`; APK signer SHA-1 checked: 6B:AD:…:5C:E8) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
