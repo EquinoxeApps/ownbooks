@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Delete your account – OwnBooks</title>
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <header><a class="brand" href="../">OwnBooks</a></header>
+    <main>
+      <h1>Delete your OwnBooks account</h1>
+      <p>
+        Deleting your account removes it and everything synced with it: your library's book details,
+        your progress and your devices. It can't be undone. Book files on your devices are not affected;
+        delete the app to remove them.
+      </p>
+      <p class="note">
+        Have the app? It's quicker there: <strong>Profile → Delete account</strong>.
+      </p>
+
+      <noscript>
+        <p class="error">This page needs JavaScript. You can also email us (see below).</p>
+      </noscript>
+
+      <section id="signed-out" class="card" hidden>
+        <h2>Sign in to continue</h2>
+        <p class="muted">Use the same sign-in method you use in the app.</p>
+        <div id="providers"></div>
+        <form id="password-form">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="email" required />
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+          <button type="submit">Sign in</button>
+        </form>
+        <p class="error" id="sign-in-error" role="alert"></p>
+      </section>
+
+      <section id="signed-in" class="card" hidden>
+        <h2>Delete this account?</h2>
+        <p>Signed in as <strong id="account-email"></strong>.</p>
+        <label for="confirm">Type DELETE to confirm</label>
+        <input id="confirm" type="text" autocomplete="off" />
+        <button id="delete" class="danger" disabled>Delete my account</button>
+        <button id="sign-out" class="secondary">Sign out</button>
+        <p class="error" id="delete-error" role="alert"></p>
+      </section>
+
+      <section id="done" class="card" hidden>
+        <h2>Your account has been deleted</h2>
+        <p>
+          Your account and all synced data are gone. If OwnBooks is still installed on a device, delete
+          the app there to remove the books and settings it keeps on the device.
+        </p>
+      </section>
+
+      <h2>Can't sign in?</h2>
+      <p>
+        Email <a href="mailto:privacy@equinoxe.app?subject=Delete%20my%20OwnBooks%20account">privacy@equinoxe.app</a>
+        from the address on your account and ask us to delete it. We confirm by email and delete it
+        within 30 days, usually much sooner.
+      </p>
+      <p class="muted">
+        More about what we keep and for how long: <a href="../privacy/">Privacy Policy</a>.
+      </p>
+    </main>
+    <footer>
+      AB Equinoxe Marketing Oy · Equinoxe Apps ·
+      <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a>
+    </footer>
+
+    <script src="../config.js"></script>
+    <script src="../vendor/supabase-js-2.117.3.js"></script>
+    <script src="delete-account.js"></script>
+  </body>
+</html>
