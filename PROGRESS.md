@@ -34,9 +34,9 @@ track.
 
 | What | Where |
 |---|---|
-| Repo | https://github.com/EquinoxeStudios/ownbooks (public, MIT) |
+| Repo | https://github.com/EquinoxeApps/ownbooks (public, MIT) |
 | CI | GitHub Actions: lint, typecheck, Jest, RLS tests against local Supabase (all green) |
-| Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Studios org (Pro), eu-central-1 |
+| Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Apps org (Pro), eu-central-1 |
 | Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
 | Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added |
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |

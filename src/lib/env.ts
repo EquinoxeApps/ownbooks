@@ -12,7 +12,7 @@ export const env = {
   /** Apple's web sign-in on Android; needs an Apple Services ID configured in Supabase. */
   appleWebSignIn: process.env.EXPO_PUBLIC_APPLE_WEB_SIGN_IN === '1',
   legalBaseUrl:
-    clean(process.env.EXPO_PUBLIC_LEGAL_BASE_URL) ?? 'https://equinoxestudios.github.io/ownbooks',
+    clean(process.env.EXPO_PUBLIC_LEGAL_BASE_URL) ?? 'https://equinoxeapps.github.io/ownbooks',
 } as const;
 
 export const isBackendConfigured = Boolean(env.supabaseUrl && env.supabaseAnonKey);
