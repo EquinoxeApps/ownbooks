@@ -42,11 +42,11 @@ track.
 | Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
 | Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added. Android (`1:469680403831:android:a59794aea3d32607e39d72`, same SHA-1) and iOS (`1:469680403831:ios:631a9f85c3ec9a66e39d72`) apps for `app.equinoxe.ownbooks` added 2026-10-23 |
 | Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients (iOS and Android for `dev.ownbooks.app`, and for `app.equinoxe.ownbooks` since 2026-10-23; the web client used by Supabase stays; the old pair can go once builds of the new ID sign in) |
-| EAS | `@agencyequinox/ownbooks`, moving to the `equinoxe-apps` organization (`@equinoxe-apps/ownbooks`); env vars set for development / preview / production |
+| EAS | `@equinoxe-apps/ownbooks` (the personal account `agencyequinox` was renamed to `equinoxe-apps` on 2026-10-23; same account, keystore and env vars); env vars set for development / preview / production |
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
 | Apple Developer | Enrolment as an organization in progress |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/29944e26-9305-4c81-a898-ff88d117fbaa (`328f2d9`) |
+| Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/29944e26-9305-4c81-a898-ff88d117fbaa (`328f2d9`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -349,7 +349,8 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
 - [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
       `app.equinoxe.ownbooks`; the app config default switched
 - [ ] Move to `app.equinoxe.ownbooks` before the first upload:
-  - [ ] Expo project transferred to `equinoxe-apps`, then `owner` in `app.config.ts` updated
+  - [x] Expo account renamed `agencyequinox` → `equinoxe-apps` (no transfer needed), `owner` in
+        `app.config.ts` updated
   - [ ] EAS Android build credentials for the new package use the existing keystore (same SHA-1);
         no build of the new package until then, or EAS generates a new key
   - [x] Firebase `ownbooksapp`: Android app (+ SHA-1) and iOS app for the new ID (Firebase did not
@@ -391,7 +392,7 @@ Deferred on 2026-10-16 to reach the MVP sooner:
   and Sign in with Apple.
 - **Production email sender** (e.g. Resend or Postmark): Supabase's built-in sender is for testing only,
   and only sends a few emails an hour; sign-up and reset codes make this more pressing.
-- **Expo project transfer** to `equinoxe-apps` and the Play Console ownership move to stores@equinoxe.app.
+- **Play Console ownership** move to stores@equinoxe.app.
 
 ## Decisions (from the planning interview)
 

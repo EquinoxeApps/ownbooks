@@ -115,7 +115,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     reactCompiler: true,
   },
   // Forks: set EAS_OWNER / EAS_PROJECT_ID (from `npx eas-cli init`) to use your own project.
-  owner: process.env.EAS_OWNER || 'agencyequinox',
+  owner: process.env.EAS_OWNER || 'equinoxe-apps',
   extra: {
     eas: { projectId: process.env.EAS_PROJECT_ID || '53b114f3-80af-48cd-8934-f5d0cb74b495' },
   },
