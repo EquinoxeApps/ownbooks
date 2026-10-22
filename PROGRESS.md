@@ -1,6 +1,6 @@
 # OwnBooks: Progress
 
-Last updated: 2026-10-20
+Last updated: 2026-10-23
 
 Source of truth for scope: [`docs/design/spec.md`](docs/design/spec.md), plus the
 interview decisions in the build plan (summarised in "Decisions" below).
@@ -34,13 +34,17 @@ track.
 
 | What | Where |
 |---|---|
+| Publisher | AB Equinoxe Marketing Oy (Business ID 3564918-4, D-U-N-S 369262372), Aurantie 2B, 45100 Kouvola, Finland. Shown in the stores as **Equinoxe Apps**. Data controller contact privacy@equinoxe.app, support support@equinoxe.app |
+| App ID | `app.equinoxe.ownbooks` (Android package and iOS bundle ID; replaced the placeholder `dev.ownbooks.app` on 2026-10-23, before anything was published) |
 | Repo | https://github.com/EquinoxeApps/ownbooks (public, MIT) |
 | CI | GitHub Actions: lint, typecheck, Jest, RLS tests against local Supabase (all green) |
 | Supabase | Project `ownbooks` (`ukqhhjlrthzlulxniqqu`), Equinoxe Apps org (Pro), eu-central-1 |
 | Supabase auth | Email + password with 6-digit codes for confirming and resetting (custom templates), Google (web + iOS client IDs, skip nonce on), Facebook (SDK, pending Meta app), Apple (iPhone native; Android web, pending Services ID) |
-| Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added |
-| Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients |
-| EAS | `@agencyequinox/ownbooks`; env vars set for development / preview / production |
+| Firebase | Project `ownbooksapp`; Android + iOS apps registered for `dev.ownbooks.app`; Android SHA-1 added. Apps for `app.equinoxe.ownbooks` still to register |
+| Google OAuth | Project `ownbooksapp`: consent screen in Testing mode, web, iOS and Android clients (iOS and Android for `dev.ownbooks.app`; new ones for `app.equinoxe.ownbooks` still to create; the web client used by Supabase stays) |
+| EAS | `@agencyequinox/ownbooks`, moving to the `equinoxe-apps` organization (`@equinoxe-apps/ownbooks`); env vars set for development / preview / production |
+| Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
+| Apple Developer | Enrolment as an organization in progress |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
 | Latest Android preview build | https://expo.dev/accounts/agencyequinox/projects/ownbooks/builds/29944e26-9305-4c81-a898-ff88d117fbaa (`328f2d9`) |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
@@ -342,14 +346,28 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
 - [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page (sign in, then call the
       already deployed `delete-account` Edge Function)
 - [ ] Production email sender in Supabase (e.g. Resend)
-- [ ] Final bundle ID and legal entity; Google OAuth consent screen → In production
+- [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
+      `app.equinoxe.ownbooks`; the app config default switched
+- [ ] Move to `app.equinoxe.ownbooks` before the first upload:
+  - [ ] Expo project transferred to `equinoxe-apps`, then `owner` in `app.config.ts` updated
+  - [ ] EAS Android build credentials for the new package use the existing keystore (same SHA-1);
+        no build of the new package until then, or EAS generates a new key
+  - [ ] Firebase `ownbooksapp`: Android app (+ SHA-1) and iOS app for the new ID
+  - [ ] Google Cloud: Android and iOS OAuth clients for the new ID; new iOS client ID and URL
+        scheme in `.env` and the three EAS environments; iOS client ID added to Supabase's Google
+        provider (authorized client IDs)
+  - [ ] Meta app: Android package name → `app.equinoxe.ownbooks` (key hash unchanged)
+  - [ ] Device check: Google and Facebook sign-in on a build of the new package
+- [ ] After the first Play upload: add Play App Signing's SHA-1 to the Firebase / Google Android
+      client and its key hash to the Meta app (apps installed from Play are signed with Google's key)
+- [ ] Google OAuth consent screen → In production
 - [ ] Meta app (ID 1419717433706997) → Live: privacy policy URL, data deletion URL (the account
       deletion page), icon, category; business verification if Meta asks. Until then only accounts
       with an app role can use Facebook sign-in
 - [ ] Play Console: store listing, data-safety form (email, usage data, diagnostics; the Facebook SDK
       is in the app for sign-in only, with app events and the advertising ID off), closed testing
-      track. New personal developer accounts need a closed test with 12+ testers for 14 days
-      before production access
+      track. The account is an organization account, so the 12-tester / 14-day closed test
+      required of new personal accounts does not apply
 
 ## After the MVP
 
@@ -364,11 +382,11 @@ Deferred on 2026-10-16 to reach the MVP sooner:
 
 ## Open items / waiting on
 
-- **Apple Developer account** ($99/yr): needed for any iPhone build and Sign in with Apple.
-- **Google Play Console** ($25): needed for release (Milestone 6).
+- **Apple Developer account** ($99/yr): enrolling as an organization; needed for any iPhone build
+  and Sign in with Apple.
 - **Production email sender** (e.g. Resend or Postmark): Supabase's built-in sender is for testing only,
   and only sends a few emails an hour; sign-up and reset codes make this more pressing.
-- **Final bundle ID + publishing entity**: placeholder is `dev.ownbooks.app`.
+- **Expo project transfer** to `equinoxe-apps` and the Play Console ownership move to stores@equinoxe.app.
 
 ## Decisions (from the planning interview)
 
@@ -377,4 +395,5 @@ chrome (dark player, themed reader) · sign-in with Google, Facebook (SDK), Appl
 English, i18n-ready · multi-file audiobooks in v1 · Literata + publisher-font toggle ·
 MIT · GitHub Pages for the legal and deletion pages · Crashlytics behind consent ·
 stop for review after each milestone · Expo SDK 57 (the plan said 56; 57 is current) ·
-skip −30 s / +30 s in the app and on the lock screen (the spec said −15 / +30; changed 2026-10-16).
+skip −30 s / +30 s in the app and on the lock screen (the spec said −15 / +30; changed 2026-10-16) ·
+published by AB Equinoxe Marketing Oy as "Equinoxe Apps", app ID `app.equinoxe.ownbooks` (2026-10-23).

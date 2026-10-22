@@ -2,7 +2,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 // Everything project-specific comes from the environment so forks can point the
 // app at their own backend. See .env.example.
-const BUNDLE_ID = process.env.OWNBOOKS_BUNDLE_ID || 'dev.ownbooks.app';
+const BUNDLE_ID = process.env.OWNBOOKS_BUNDLE_ID || 'app.equinoxe.ownbooks';
 const GOOGLE_IOS_URL_SCHEME = process.env.GOOGLE_IOS_URL_SCHEME;
 // Facebook App ID and client token are public values (Meta for Developers → Settings).
 const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
