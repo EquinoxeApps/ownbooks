@@ -13,6 +13,8 @@ import { Platform } from 'react-native';
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
+import { AUTH_REDIRECT } from './authCallback';
+
 /** i18n keys under auth.* for errors shown to the user. */
 export type AuthErrorKey =
   | 'errors.offline'
@@ -133,9 +135,6 @@ export const isGoogleSignInConfigured = Boolean(
   env.googleWebClientId && (Platform.OS !== 'ios' || env.googleIosClientId),
 );
 export const isFacebookSignInConfigured = Boolean(env.facebookAppId);
-
-/** Where web sign-ins (Apple on Android) return to; must be in Supabase's redirect allow-list. */
-export const AUTH_REDIRECT = 'ownbooks://auth/callback';
 
 export async function signInWithApple(): Promise<void> {
   if (Platform.OS !== 'ios') return signInWithAppleWeb();
