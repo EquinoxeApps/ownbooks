@@ -6,6 +6,7 @@
 //
 // The .p8 is a private key: keep it in a password manager, never in the repo.
 
+import { Buffer } from 'node:buffer';
 import { createPrivateKey, sign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
