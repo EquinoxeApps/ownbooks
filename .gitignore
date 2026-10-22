@@ -13,6 +13,8 @@ expo-env.d.ts
 .kotlin/
 *.orig.*
 *.jks
+# EAS credentials.json holds keystore passwords
+credentials.json
 *.p8
 *.p12
 *.key
