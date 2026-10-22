@@ -363,7 +363,10 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
   - [x] Meta app ("audioread"): package `app.equinoxe.ownbooks` added next to `dev.ownbooks.app`,
         class name `app.equinoxe.ownbooks.MainActivity`, key hash unchanged (2026-10-23). Remove the
         old package once a build of the new ID signs in
-  - [ ] Device check: Google and Facebook sign-in on a build of the new package
+  - [x] Device check: Google and Facebook sign-in on a build of the new package (build 707af67f,
+        Galaxy S25+, 2026-10-23)
+  - [ ] Remove the `dev.ownbooks.app` leftovers: old Google iOS + Android clients, old Firebase apps,
+        old package in the Meta app
 - [ ] After the first Play upload: add Play App Signing's SHA-1 to the Firebase / Google Android
       client and its key hash to the Meta app (apps installed from Play are signed with Google's key)
 - [ ] Google OAuth consent screen → In production
