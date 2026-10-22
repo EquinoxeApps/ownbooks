@@ -11,20 +11,20 @@ next one starts.
 
 The MVP delivers the whole product promise: import, play **and read** your own DRM-free
 audiobooks and ebooks, with progress synced across devices. It is the spec's v1 minus the
-items under "After the MVP" below. iPhone is out of scope for the MVP (blocked on the Apple
-account) but stays required before an App Store release.
+items under "After the MVP" below. iPhone is part of the MVP (decided 2026-10-23, once the Apple
+Developer account was approved; until then the MVP was Android only).
 
-**Done when:** every acceptance criterion in spec §8 passes on Android and is recorded here, the
-store requirements in Milestone 6 are met, and the app is live in a Google Play closed testing
-track.
+**Done when:** every acceptance criterion in spec §8 passes on Android and iPhone and is recorded
+here, the store requirements in Milestone 6 are met, and the app is live in a Google Play closed
+testing track and on TestFlight.
 
 ## Status at a glance
 
 | # | Milestone | Status |
 |---|---|---|
-| 0 | Prerequisites (accounts, MCP servers, backend projects) | ✅ Done (Apple / Play Console pending) |
-| 1 | Foundation | ✅ Done on Android (iPhone waits for the Apple account) |
-| 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone waits for the Apple account) |
+| 0 | Prerequisites (accounts, MCP servers, backend projects) | ✅ Done (Apple Developer and Play Console accounts exist) |
+| 1 | Foundation | ✅ Done on Android (iPhone build and device check still to do) |
+| 2 | Single-file audio + audio risk spike | ✅ Done on Android (iPhone still to do) |
 | 3 | Full audio | ✅ MVP items done on Android (deferred items listed under "After the MVP") |
 | 4 | Ebooks | ✅ Done on Android (DRM / damaged-file import still to try on a device) |
 | 5 | Sync | ✅ Done on Android (web deletion page moved to 6; activity sync after the MVP) |
@@ -82,7 +82,8 @@ Verified on device (Android, build 63590f53, 2026-10-16):
 - [x] Account switch prompt (second account, keep hidden, books return to the first account)
 
 Still open:
-- [ ] iPhone build: blocked on the Apple Developer account
+- [ ] iPhone build (in the MVP since 2026-10-23): first `eas build -p ios` needs the user's Apple
+      login to create the certificate and profile; then every milestone's device checks on an iPhone
 
 ## Milestone 2: Single-file audio + risk spike ✅
 
@@ -258,7 +259,13 @@ passwordless email code is gone; codes now only confirm a new account and reset 
 - [x] Meta app 1419717433706997 (Development mode): Consumer type, Facebook Login, email permission, Android package dev.ownbooks.app,
       key hash `a63TPQ2ETyTeWFENibUN1beRXOg=` (EAS keystore), privacy policy + data deletion URLs;
       App ID + client token as EAS env vars; Facebook provider enabled in Supabase (checked 2026-10-17)
-- [ ] Apple Services ID + key (Apple Developer account approved 2026-10-23), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
+- [x] Apple App ID `app.equinoxe.ownbooks` (Sign in with Apple, primary) and Services ID
+      `app.equinoxe.ownbooks.signin` (domain `ukqhhjlrthzlulxniqqu.supabase.co`, return URL
+      `…/auth/v1/callback`) registered 2026-10-23; Team ID `K447M735N4`
+- [ ] Sign in with Apple key (.p8, kept in the password manager) → client secret with
+      `node scripts/apple-client-secret.mjs` → Supabase Apple provider (client IDs
+      `app.equinoxe.ownbooks.signin,app.equinoxe.ownbooks`), then EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1.
+      **The secret expires after 6 months: renew it before then** (date printed by the script)
 - [x] Device checks (builds c4103406 and d6f98a33, 2026-10-17): breached password refused with its own
       message; create account → code → library; sign in and wrong-password message; forgot password
       (code + new password); Facebook via the SDK and the Edge Function → library
@@ -345,6 +352,15 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
 - [ ] Empty and error states, accessibility pass (VoiceOver / TalkBack)
 - [ ] GitHub Pages `/site`: privacy policy, terms, account deletion page (sign in, then call the
       already deployed `delete-account` Edge Function)
+  - [x] Pages written (2026-10-23): `site/privacy`, `site/terms`, `site/delete-account` (email +
+        password and whichever OAuth providers Supabase has on; email fallback), no cookies or
+        third-party requests (supabase-js vendored); `.github/workflows/pages.yml` deploys `site/`
+  - [x] `delete-account` answers CORS for `https://equinoxeapps.github.io` (`WEB_ORIGINS` secret
+        for forks)
+  - [ ] User review of the texts, then: push, enable Pages, deploy the function, add
+        `https://equinoxeapps.github.io/ownbooks/delete-account/` to Supabase's redirect URLs,
+        point the Meta app's privacy policy and data deletion URLs at the new pages, test a
+        deletion with a throwaway account
 - [ ] Production email sender in Supabase (e.g. Resend)
 - [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
       `app.equinoxe.ownbooks`; the app config default switched
@@ -388,7 +404,6 @@ Deferred on 2026-10-16 to reach the MVP sooner:
   Activity tab (this week, listening vs reading, books finished, days with books) and History
 - Profile: "Your devices" list
 - Maestro end-to-end flows (manual device checklists per milestone until then)
-- iPhone build, Sign in with Apple and the App Store listing (needs the Apple Developer account)
 
 ## Open items / waiting on
 
