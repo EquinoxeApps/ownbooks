@@ -267,7 +267,14 @@ passwordless email code is gone; codes now only confirm a new account and reset 
       on (client IDs `app.equinoxe.ownbooks.signin,app.equinoxe.ownbooks`); EXPO_PUBLIC_APPLE_WEB_SIGN_IN=1
       in the three EAS environments (2026-10-23). Apple's authorize page accepts the Services ID.
       **The secret expires on 2027-04-20: generate a new one and paste it into Supabase before then**
-- [ ] Device check: Apple sign-in on Android (web flow) lands in the library
+- [x] Device check: Apple sign-in on Android (web flow) lands in the library (build 4dcb919d, S25+,
+      2026-10-23). "Share My Email" with the same address linked Apple to the existing Google
+      account. Found and fixed on the way:
+  - The return link `ownbooks://auth/callback?code=…` also reached Expo Router, which showed
+    "Unmatched route"; `src/app/+native-intent.tsx` now keeps the current screen (de7c80b)
+  - The profile said "Signed in with Google" after an Apple sign-in: it read the provider the
+    account was created with; it now uses the identity signed in with most recently (577a6eb,
+    in the next build)
 - [x] Device checks (builds c4103406 and d6f98a33, 2026-10-17): breached password refused with its own
       message; create account → code → library; sign in and wrong-password message; forgot password
       (code + new password); Facebook via the SDK and the Edge Function → library
