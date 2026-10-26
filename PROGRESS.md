@@ -1,6 +1,6 @@
 # OwnBooks: Progress
 
-Last updated: 2026-10-23 (Milestone 6 code)
+Last updated: 2026-10-26 (first iOS build)
 
 Source of truth for scope: [`docs/design/spec.md`](docs/design/spec.md), plus the
 interview decisions in the build plan (summarised in "Decisions" below).
@@ -46,7 +46,9 @@ testing track and on TestFlight.
 | Google Play Console | Organization account; ownership moving to stores@equinoxe.app |
 | Apple Developer | Organization account approved (2026-10-23), AB Equinoxe Marketing Oy |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
-| Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/707af67f-fdb5-4b46-b6a0-34635d7fb46e (`890b63a`, first build of `app.equinoxe.ownbooks`; APK signer SHA-1 checked: 6B:AD:…:5C:E8) |
+| Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/64855f6d-5436-4ef5-8c0a-01060c85a181 (`885cfc4`, milestone 6; APK checked: Firebase `ownbooksapp` config and Crashlytics in, no `AD_ID`) |
+| Latest iOS build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/ea7c80b7-9e09-4d48-8dbc-8cf737845109 (`885cfc4`, production profile, build number 1; not yet on TestFlight) |
+| iOS signing | EAS-managed distribution certificate (serial `7354…E5D6`) and App Store provisioning profile `2A3G87VS46`, both expire 2027-10-26 |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
 ## Milestone 1: Foundation ✅
@@ -82,8 +84,11 @@ Verified on device (Android, build 63590f53, 2026-10-16):
 - [x] Account switch prompt (second account, keep hidden, books return to the first account)
 
 Still open:
-- [ ] iPhone build (in the MVP since 2026-10-23): first `eas build -p ios` needs the user's Apple
-      login to create the certificate and profile; then every milestone's device checks on an iPhone
+- [x] iPhone build: credentials created with the user's Apple login (2026-10-26); first build
+      ea7c80b7 (production profile) compiled with Firebase dynamic frameworks, Facebook / Google
+      sign-in and the expo-audio patch. `--auto-submit` failed to create the App Store Connect app
+      ("OwnBooks" is taken; Apple wanted a company name), so the record is being made by hand
+- [ ] Every milestone's device checks on an iPhone (via TestFlight)
 
 ## Milestone 2: Single-file audio + risk spike ✅
 
@@ -408,7 +413,11 @@ Code written 2026-10-23 (lint, typecheck, 186 unit tests green; not yet in a bui
 - [ ] Production email sender in Supabase: Resend, sending domain `mail.equinoxe.app` (a subdomain,
       so the root domain's Google Workspace mail records stay as they are; DNS on Cloudflare).
       Resend MCP added for this project (local scope, OAuth) on 2026-10-23; waiting on its login
-- [ ] App Store Connect app record (bundle ID `app.equinoxe.ownbooks`, SKU `ownbooks-ios`)
+- [ ] App Store Connect app record (bundle ID `app.equinoxe.ownbooks`, SKU `ownbooks-ios`): being
+      created by hand (the App Store name "OwnBooks" is taken); then `ascAppId` in `eas.json` and
+      submit ea7c80b7 to TestFlight
+- [ ] Before the Play upload: find where `USE_BIOMETRIC` and `SYSTEM_ALERT_WINDOW` in the APK
+      manifest come from (not in our config or any React Native package)
 - [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
       `app.equinoxe.ownbooks`; the app config default switched
 - [ ] Move to `app.equinoxe.ownbooks` before the first upload:
