@@ -47,7 +47,7 @@ testing track and on TestFlight.
 | Apple Developer | Organization account approved (2026-10-23), AB Equinoxe Marketing Oy |
 | Android signing | EAS-managed keystore (SHA-1 `6B:AD:D3:3D:0D:84:4F:24:DE:58:51:0D:89:B5:0D:D5:B7:91:5C:E8`) |
 | Latest Android preview build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/64855f6d-5436-4ef5-8c0a-01060c85a181 (`885cfc4`, milestone 6; APK checked: Firebase `ownbooksapp` config and Crashlytics in, no `AD_ID`) |
-| Latest iOS build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/ea7c80b7-9e09-4d48-8dbc-8cf737845109 (`885cfc4`, production profile, build number 1; uploaded to App Store Connect 2026-10-26, submission `4e6f7d99`) |
+| Latest iOS build | https://expo.dev/accounts/equinoxe-apps/projects/ownbooks/builds/ea7c80b7-9e09-4d48-8dbc-8cf737845109 (`885cfc4`, production profile, version 1.0.0 build 2; uploaded to App Store Connect 2026-10-26, submission `4e6f7d99`; processed, Ready to Submit) |
 | iOS signing | EAS-managed distribution certificate (serial `7354…E5D6`) and App Store provisioning profile `2A3G87VS46`, both expire 2027-10-26 |
 | MCP servers (local) | supabase, firebase, expo (the github MCP token is broken; use the `gh` CLI) |
 
@@ -417,7 +417,8 @@ Code written 2026-10-23 (lint, typecheck, 186 unit tests green; not yet in a bui
       Resend MCP added for this project (local scope, OAuth) on 2026-10-23; waiting on its login
 - [x] App Store Connect app record (bundle ID `app.equinoxe.ownbooks`, SKU `ownbooks-ios`, Apple ID
       `6827056392`, set as `ascAppId` in `eas.json`); created by hand because "OwnBooks" is taken
-- [x] First build (ea7c80b7) uploaded to App Store Connect (2026-10-26)
+- [x] First build (ea7c80b7, 1.0.0 (2)) uploaded and processed (2026-10-26). Apple's "processing
+      complete" email never arrived; check the TestFlight page instead of waiting for it
 - [ ] TestFlight internal testing group with the user; install on the iPhone
 - [ ] Before the Play upload: find where `USE_BIOMETRIC` and `SYSTEM_ALERT_WINDOW` in the APK
       manifest come from (not in our config or any React Native package)
