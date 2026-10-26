@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -17,7 +17,7 @@ import { SeekBar } from '@/features/player/SeekBar';
 import { formatSpeed } from '@/features/player/speed';
 import { usePlayerStore } from '@/features/player/store';
 import { formatClock, formatRemaining } from '@/lib/time';
-import { Icon, IconButton, Text } from '@/ui';
+import { Icon, IconButton, Text, useAnnounce } from '@/ui';
 import { fonts, playerColors } from '@/ui/tokens';
 
 // Matches the lock-screen buttons (patches/expo-audio+57.0.5.patch).
@@ -35,6 +35,18 @@ export default function Player() {
       <SafeAreaView style={styles.root}>
         <View style={styles.topRow}>
           <IconButton icon="chevronDown" accessibilityLabel={t('player.close')} color={playerColors.text} onPress={close} />
+        </View>
+        <View style={styles.pending}>
+          {s.error ? (
+            <PlayerError message={t(`player.errors.${s.error}`)} />
+          ) : (
+            <ActivityIndicator
+              color={playerColors.text}
+              accessible
+              accessibilityRole="progressbar"
+              accessibilityLabel={t('player.loading')}
+            />
+          )}
         </View>
       </SafeAreaView>
     );
@@ -98,9 +110,7 @@ export default function Player() {
       </View>
 
       {s.error ? (
-        <Text style={styles.error} color={playerColors.accent} accessibilityRole="alert">
-          {t(`player.errors.${s.error}`)}
-        </Text>
+        <PlayerError message={t(`player.errors.${s.error}`)} />
       ) : (
         <View style={styles.seek}>
           <SeekBar
@@ -188,6 +198,15 @@ function RoundSkip({ label, a11y, onPress }: { label: string; a11y: string; onPr
   );
 }
 
+function PlayerError({ message }: { message: string }) {
+  useAnnounce(message);
+  return (
+    <Text style={styles.error} color={playerColors.accent} accessibilityRole="alert" accessibilityLiveRegion="polite">
+      {message}
+    </Text>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -204,6 +223,7 @@ const styles = StyleSheet.create({
   heading: { fontFamily: fonts.black, fontSize: 30, lineHeight: 34, letterSpacing: -0.3 },
   sub: { fontSize: 16 },
   error: { fontFamily: fonts.medium, fontSize: 16, lineHeight: 22 },
+  pending: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   seek: { gap: 2 },
   times: { flexDirection: 'row', justifyContent: 'space-between' },
   time: { fontFamily: fonts.medium, fontSize: 14, fontVariant: ['tabular-nums'] },

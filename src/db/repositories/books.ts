@@ -60,6 +60,16 @@ export async function countBooks(db: Db, userId: string): Promise<number> {
   return row?.n ?? 0;
 }
 
+/** Books whose files are on this phone, largest first (Storage screen). */
+export async function listStorage(db: Db, userId: string): Promise<BookRow[]> {
+  return db.getAllAsync<BookRow>(
+    `SELECT * FROM books
+      WHERE user_id = ? AND on_device = 1
+      ORDER BY COALESCE(size_bytes, 0) DESC, title COLLATE NOCASE ASC`,
+    [userId],
+  );
+}
+
 export async function getBook(db: Db, id: string): Promise<BookRow | null> {
   return db.getFirstAsync<BookRow>('SELECT * FROM books WHERE id = ?', [id]);
 }

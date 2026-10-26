@@ -39,6 +39,15 @@ export function accountFromUser(user: User): LocalAccount {
   };
 }
 
+/** Created in the last few minutes (an email account's confirmation code can take a while). */
+const NEW_ACCOUNT_MS = 15 * 60_000;
+
+/** Whether this sign-in is the account's first, for the sign_up / login analytics events. */
+export function isNewUser(user: Pick<User, 'created_at'>, now = Date.now()): boolean {
+  const created = Date.parse(user.created_at);
+  return Number.isFinite(created) && now - created < NEW_ACCOUNT_MS;
+}
+
 /** Name shown on the profile card: real name, else the email's local part. */
 export function displayName(account: LocalAccount): string {
   if (account.name) return account.name;

@@ -176,14 +176,18 @@ export default function ImportScreen() {
 
         <Card padding={20} style={styles.copyCard}>
           <View style={styles.copyHeader}>
-            <Text style={styles.filesTitle}>
+            <Text style={styles.filesTitle} accessibilityLiveRegion="polite">
               {preparing && copyDone ? t('import.analysing') : t('import.copying')}
             </Text>
             <Text style={styles.count} color={colors.primaryDark}>
               {t('import.ofFiles', { done: cur.filesCopied, total: fileCount })}
             </Text>
           </View>
-          <ProgressBar value={fraction} height={12} accessibilityLabel={t('import.copying')} />
+          <ProgressBar
+            value={fraction}
+            height={12}
+            accessibilityLabel={preparing && copyDone ? t('import.analysing') : t('import.copying')}
+          />
           <Text variant="meta">{t('import.untouched')}</Text>
         </Card>
 

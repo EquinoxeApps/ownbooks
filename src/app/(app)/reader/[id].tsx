@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
 import { useDb } from '@/db/provider';
+import { track } from '@/features/analytics';
 import { getEbookFilePath, getLibraryItem, markOpened } from '@/db/repositories/books';
 import { getProgress, saveEbookPosition } from '@/db/repositories/progress';
 import { useAuthStore } from '@/features/auth/store';
@@ -16,7 +17,7 @@ import { emptyReaderState, useReaderStore, type ReaderLocation } from '@/feature
 import { READER_HTML } from '@/features/reader/web/readerHtml.generated';
 import { requestSync } from '@/features/sync/service';
 import { fileUri } from '@/lib/files';
-import { fonts, IconButton, Text } from '@/ui';
+import { Button, fonts, IconButton, Text, useAnnounce, useScreenReader } from '@/ui';
 
 /** Positions are written at most this often while turning pages (spec §4.6: debounced). */
 const SAVE_DEBOUNCE_MS = 800;
@@ -65,6 +66,8 @@ export default function Reader() {
     if (userId) void loadSettings(db, userId);
   }, [db, userId, loadSettings]);
 
+  useEffect(() => track('reader_opened'), [id]);
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -78,7 +81,10 @@ export default function Reader() {
       await markOpened(db, id, Date.now());
       savedCfi.current = progress?.cfi ?? null;
       setOpened({ url, cfi: progress?.cfi ?? null, title: book.title });
-    })();
+    })().catch((e: unknown) => {
+      console.warn('Opening the book failed', e);
+      if (!cancelled) setError('openFailed');
+    });
     useReaderStore.setState({ ...emptyReaderState, bookId: id, send });
     const sub = AppState.addEventListener('change', (state) => {
       if (state !== 'active') flush();
@@ -132,6 +138,8 @@ export default function Reader() {
   const close = () => (router.canGoBack() ? router.back() : router.replace('/library'));
   const { theme } = style;
   const percent = Math.round((location?.fraction ?? 0) * 100);
+  // Swipes and taps on the page don't reach the book with VoiceOver / TalkBack on, so it gets buttons.
+  const screenReader = useScreenReader();
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.bg }]} edges={['top', 'bottom']}>
@@ -164,9 +172,7 @@ export default function Reader() {
 
       {error ? (
         <View style={styles.center}>
-          <Text variant="lead" color={theme.text} style={styles.centerText} accessibilityRole="alert">
-            {t(`reader.${error}`)}
-          </Text>
+          <ReaderError message={t(`reader.${error}`)} color={theme.text} />
         </View>
       ) : opened ? (
         <View style={styles.page}>
@@ -197,14 +203,43 @@ export default function Reader() {
             onContentProcessDidTerminate={() => web.current?.reload()}
             onRenderProcessGone={() => web.current?.reload()}
           />
-          {!rendered ? (
-            <View style={[styles.loading, { backgroundColor: theme.bg }]} accessibilityLabel={t('reader.loading')}>
-              <ActivityIndicator color={theme.muted} />
+          {!rendered ? <Loading color={theme.muted} background={theme.bg} label={t('reader.loading')} /> : null}
+          {screenReader && rendered ? (
+            <View style={styles.pageButtons}>
+              <View style={styles.pageButton}>
+                <Button variant="secondary" compact label={t('reader.previousPage')} onPress={() => send({ name: 'prev' })} />
+              </View>
+              <View style={styles.pageButton}>
+                <Button variant="secondary" compact label={t('reader.nextPage')} onPress={() => send({ name: 'next' })} />
+              </View>
             </View>
           ) : null}
         </View>
-      ) : null}
+      ) : (
+        <Loading color={theme.muted} background={theme.bg} label={t('reader.loading')} />
+      )}
     </SafeAreaView>
+  );
+}
+
+function ReaderError({ message, color }: { message: string; color: string }) {
+  useAnnounce(message);
+  return (
+    <Text variant="lead" color={color} style={styles.centerText} accessibilityRole="alert" accessibilityLiveRegion="polite">
+      {message}
+    </Text>
+  );
+}
+
+function Loading({ color, background, label }: { color: string; background: string; label: string }) {
+  return (
+    <View
+      style={[styles.loading, { backgroundColor: background }]}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={label}>
+      <ActivityIndicator color={color} />
+    </View>
   );
 }
 
@@ -219,4 +254,6 @@ const styles = StyleSheet.create({
   loading: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   centerText: { textAlign: 'center' },
+  pageButtons: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingVertical: 8 },
+  pageButton: { flex: 1 },
 });

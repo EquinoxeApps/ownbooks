@@ -2,6 +2,7 @@ import { router, Stack } from 'expo-router';
 import { useEffect } from 'react';
 
 import { useDb } from '@/db/provider';
+import { analyticsAvailable, useAnalytics, useAnalyticsStore } from '@/features/analytics';
 import { useAuthStore } from '@/features/auth/store';
 import { backfillTags } from '@/features/import/backfill';
 import { cleanupStaleImports } from '@/features/import/importer';
@@ -12,11 +13,17 @@ export default function AppLayout() {
   const db = useDb();
   const userId = useAuthStore((s) => s.account?.id ?? '');
   const hasOtherAccounts = useAuthStore((s) => s.otherAccounts.length > 0);
+  const consentUnset = useAnalyticsStore((s) => s.consent === 'unset');
 
   // A different account signed in on this device: offer to clean up once.
   useEffect(() => {
     if (hasOtherAccounts) router.push('/account-switch');
   }, [hasOtherAccounts]);
+
+  // Ask about analytics once per account, after any account-switch prompt.
+  useEffect(() => {
+    if (consentUnset && !hasOtherAccounts && analyticsAvailable()) router.push('/consent');
+  }, [consentUnset, hasOtherAccounts]);
 
   // Remove half-copied files if the app was killed during an import.
   useEffect(() => {
@@ -29,6 +36,7 @@ export default function AppLayout() {
   }, [db, userId]);
 
   useSync(db, userId);
+  useAnalytics(db, userId);
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
@@ -101,6 +109,7 @@ export default function AppLayout() {
           sheetCornerRadius: 28,
         }}
       />
+      <Stack.Screen name="consent" options={{ presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="import" options={{ gestureEnabled: false }} />
       <Stack.Screen name="import-done" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen

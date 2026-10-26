@@ -61,6 +61,23 @@ cp .env.example .env   # fill in the Supabase URL and anon/publishable key
 For EAS builds, add the same variables as
 [EAS environment variables](https://docs.expo.dev/eas/environment-variables/).
 
+Supabase's built-in email sender only manages a few emails an hour. For real use, add your own
+SMTP sender under **Auth → Emails → SMTP Settings** (OwnBooks uses Resend).
+
+### Firebase (optional: analytics and crash reports)
+
+Create a Firebase project with Google Analytics, add Android and iOS apps with your bundle ID, and
+put `google-services.json` and `GoogleService-Info.plist` in the repo root (both are gitignored).
+For EAS builds, upload them as file variables:
+
+```sh
+npx eas-cli env:set --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json --visibility sensitive --environment production
+npx eas-cli env:set --name GOOGLE_SERVICE_INFO_PLIST --type file --value ./GoogleService-Info.plist --visibility sensitive --environment production
+```
+
+Without both files the app is built without Firebase and never asks about analytics. With them,
+`firebase.json` keeps every kind of collection off until the user agrees on the consent screen.
+
 ### 3. Build and run
 
 The app uses native modules, so it runs in a development build, not Expo Go.

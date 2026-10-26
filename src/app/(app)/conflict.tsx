@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDb } from '@/db/provider';
+import { track } from '@/features/analytics';
 import { listChapters } from '@/db/repositories/chapters';
 import { listTracks } from '@/db/repositories/tracks';
 import type { Db, ProgressRow, RemoteProgressRow } from '@/db/types';
@@ -34,7 +35,12 @@ export default function ConflictSheet() {
       if (cancelled) return;
       // Settled in the meantime (e.g. a newer sync): nothing to ask, so close.
       if (!loaded && router.canGoBack()) router.back();
+      if (loaded) track('sync_conflict_shown', { type: loaded.book.type });
       setData(loaded);
+    }, (error: unknown) => {
+      // Never leave an empty sheet: close it, the book stays as it was.
+      console.warn('Loading the conflict failed', error);
+      if (!cancelled && router.canGoBack()) router.back();
     });
     return () => {
       cancelled = true;

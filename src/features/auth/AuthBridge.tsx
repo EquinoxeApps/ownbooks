@@ -2,11 +2,12 @@ import { getNetworkStateAsync } from 'expo-network';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { useDb } from '@/db/provider';
+import { track } from '@/features/analytics';
 import { unload as unloadPlayer } from '@/features/player/controller';
 import { bootStep } from '@/lib/boot';
 import { supabase } from '@/lib/supabase';
 
-import { accountFromUser } from './account';
+import { accountFromUser, isNewUser } from './account';
 import { useAuthStore } from './store';
 
 /**
@@ -46,7 +47,10 @@ export function AuthBridge({ children }: { children: ReactNode }) {
         // new password is saved (the USER_UPDATED event that follows).
         if (event === 'PASSWORD_RECOVERY') return;
         if (session?.user) {
-          await signedIn(db, accountFromUser(session.user));
+          const next = accountFromUser(session.user);
+          // Only a sign-in that's happening now, not a restored or refreshed session.
+          if (account?.id !== next.id) track(isNewUser(session.user) ? 'sign_up' : 'login', { method: next.provider });
+          await signedIn(db, next);
           return;
         }
         if (event === 'SIGNED_OUT') {

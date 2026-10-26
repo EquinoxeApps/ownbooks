@@ -2,6 +2,7 @@ import { deleteBookRows, getBook, makePlaceholder, setFinished, updateBookDetail
 import { applyRemoteProgress, getRemoteProgress } from '@/db/repositories/progress';
 import { addPendingOp } from '@/db/repositories/sync';
 import type { Db } from '@/db/types';
+import { track } from '@/features/analytics';
 import { refreshDetails, unload } from '@/features/player/controller';
 import { usePlayerStore } from '@/features/player/store';
 import { requestSync } from '@/features/sync/service';
@@ -50,5 +51,7 @@ export async function renameBook(db: Db, bookId: string, title: string, author: 
 export async function markFinished(db: Db, bookId: string, finished: boolean): Promise<void> {
   if (isLoaded(bookId)) await unload();
   await setFinished(db, bookId, finished, Date.now());
+  const book = finished ? await getBook(db, bookId) : null;
+  if (book) track('book_finished', { type: book.type });
   requestSync();
 }

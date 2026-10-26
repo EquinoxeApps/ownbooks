@@ -5,6 +5,7 @@ import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
 import { findByFingerprint, insertAudioBook, insertEbook, type NewChapter } from '@/db/repositories/books';
 import type { Db } from '@/db/types';
+import { formatOf, sizeBucket, track } from '@/features/analytics';
 import { requestSync } from '@/features/sync/service';
 import { BOOKS_DIR } from '@/lib/files';
 
@@ -63,6 +64,11 @@ let session: {
 
 const set = useImportStore.setState;
 
+/** Analytics: the reason only, never anything about the file. */
+function trackFailure(key: ImportErrorKey) {
+  track('import_failed', { reason: key === 'noSpace' ? 'no_space' : key });
+}
+
 /** Which step of the pipeline is running, reported with unexpected errors. */
 let step = 'start';
 
@@ -86,7 +92,9 @@ export async function pickAndImport(db: Db, userId: string): Promise<boolean> {
 
   set({ ...initialImportState, queue: groups, rejected });
   if (groups.length === 0) {
-    set({ status: 'failed', error: rejected[0]?.reason ?? 'unsupported' });
+    const reason = rejected[0]?.reason ?? 'unsupported';
+    set({ status: 'failed', error: reason });
+    trackFailure(reason);
     return true;
   }
   session = { db, userId, cancelled: false, prepared: null };
@@ -101,6 +109,7 @@ async function prepareCurrent(): Promise<void> {
   if (!s || !group) return;
 
   const bytesTotal = group.files.reduce((sum, f) => sum + f.size, 0);
+  track('import_started', { type: group.kind, file_count: group.files.length });
   set({
     status: 'preparing',
     error: null,
@@ -164,6 +173,7 @@ async function prepareCurrent(): Promise<void> {
       error: expected ? error.key : 'generic',
       errorDetail: expected ? null : describe(error),
     });
+    trackFailure(expected ? error.key : 'generic');
     if (!expected) console.warn('Import failed', error);
   }
 }
@@ -388,6 +398,7 @@ export async function saveCurrent(): Promise<string | null> {
     if (prepared.tmpDir.exists) prepared.tmpDir.delete();
     s.prepared = null;
     set({ status: 'failed', error: 'duplicate' });
+    trackFailure('duplicate');
     return null;
   }
   const bookId = match?.id ?? randomUUID();
@@ -432,9 +443,16 @@ export async function saveCurrent(): Promise<string | null> {
     if (prepared.tmpDir.exists) prepared.tmpDir.delete();
     console.warn('Saving import failed', error);
     set({ status: 'failed', error: 'generic', errorDetail: describe(error) });
+    trackFailure('generic');
     return null;
   }
 
+  track('import_completed', {
+    type: prepared.kind,
+    format: formatOf(current.group.files.map((f) => extensionOf(f.name))),
+    size: sizeBucket(prepared.sizeBytes),
+    track_count: prepared.kind === 'audio' ? prepared.tracks.length : 1,
+  });
   requestSync();
   const state = useImportStore.getState();
   set({

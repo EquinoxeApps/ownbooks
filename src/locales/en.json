@@ -162,7 +162,12 @@
     "placeholderHint": "Shows how to continue this book on this phone.",
     "lastReadOn": "Last read on {{device}} · {{percent}}%",
     "lastListenedOn": "Last listened on {{device}} · {{percent}}%",
-    "percentDone": "{{percent}}% done"
+    "percentDone": "{{percent}}% done",
+    "loadFailed": "Your library couldn’t be loaded. Close OwnBooks and open it again. Your books and places are safe.",
+    "noneOfType": {
+      "audio": "No audiobooks yet. Tap + to import one.",
+      "ebook": "No ebooks yet. Tap + to import one."
+    }
   },
   "activity": {
     "title": "Activity",
@@ -212,7 +217,12 @@
       "deleting": "Deleting…",
       "offline": "You’re offline. Connect to the internet to delete your account.",
       "failed": "Your account couldn’t be deleted. Please try again."
-    }
+    },
+    "analytics": "Share anonymous usage",
+    "analyticsHint": "Usage statistics and crash reports. Never what you read or listen to.",
+    "storage": "Storage",
+    "storageSummary_one": "{{count}} book on this phone",
+    "storageSummary_other": "{{count}} books on this phone"
   },
   "import": {
     "foundAudiobook": "We found your audiobook.",
@@ -298,7 +308,8 @@
     "sleepEndOfChapter": "End of chapter",
     "sleepStopsIn": "Stops in {{time}}. The timer only runs while the book plays.",
     "sleepStopsAtChapterEnd": "Stops at the end of this chapter.",
-    "sleepOff": "Turn off timer"
+    "sleepOff": "Turn off timer",
+    "loading": "Loading the book…"
   },
   "book": {
     "details": "Book details",
@@ -326,7 +337,9 @@
     "removeEverywhereConfirm": "Remove everywhere",
     "notOnDeviceBody": "This book’s file isn’t on this phone. Only your place syncs, never the file, so import the same file here to continue.",
     "notOnDeviceFrom": "You were last on {{device}}. Only your place syncs, never the file, so import the same file here to continue.",
-    "importHere": "Import the file"
+    "importHere": "Import the file",
+    "loadFailed": "This book couldn’t be loaded. Go back and try again.",
+    "actionFailed": "That didn’t work. Please try again."
   },
   "reader": {
     "back": "Back to library",
@@ -367,7 +380,9 @@
     "fonts": {
       "literata": "Literata",
       "publisher": "Book’s font"
-    }
+    },
+    "previousPage": "Previous page",
+    "nextPage": "Next page"
   },
   "sync": {
     "conflict": {
@@ -385,5 +400,25 @@
       "noteAudio": "Only your position is synced. The audiobook file never leaves this phone.",
       "noteEbook": "Only your position is synced. The ebook file never leaves this phone."
     }
+  },
+  "consent": {
+    "title": "Help improve OwnBooks?",
+    "lead": "You can share anonymous usage statistics and crash reports with us. Nothing is shared unless you say yes.",
+    "shared": "We’d learn which features get used, like an import finishing or how long a listening session was (in broad ranges), and what went wrong when the app crashes.",
+    "never": "Never what you read or listen to: no titles, authors, file names or anything else from your books.",
+    "accept": "Share",
+    "decline": "Don’t share",
+    "later": "You can change this any time in Profile."
+  },
+  "storage": {
+    "title": "Storage",
+    "lead": "Books take up space on this phone only. Deleting one here keeps your place, so you can import it again later.",
+    "total": "OwnBooks uses",
+    "free": "{{value}} {{unit}} free on this phone",
+    "books": "Books on this phone",
+    "bookSize": "{{value}} {{unit}}",
+    "bookRow": "{{title}}, {{type}}, {{value}} {{unit}}",
+    "empty": "No books on this phone yet.",
+    "loadFailed": "Storage couldn’t be read. Go back and try again."
   }
 }

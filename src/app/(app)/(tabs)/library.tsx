@@ -18,6 +18,7 @@ import {
   Chip,
   colors,
   Cover,
+  ErrorText,
   fonts,
   Icon,
   IconButton,
@@ -43,7 +44,7 @@ export default function Library() {
     if (userId) void loadPrefs(db, userId);
   }, [db, userId, loadPrefs]);
 
-  const { data: all } = useLiveQuery(
+  const { data: all, error } = useLiveQuery(
     (db) => listLibrary(db, userId, 'all', sort),
     ['books', 'progress'],
     `${userId}:${sort}`,
@@ -61,6 +62,21 @@ export default function Library() {
   const openBook = (book: LibraryItem, autoplay = false) => void open(db, book, { autoplay });
 
   const openDetails = (book: LibraryItem) => router.push({ pathname: '/book/[id]', params: { id: book.id } });
+
+  if (error && !all) {
+    return (
+      <SafeAreaView edges={['top']} style={styles.root}>
+        <View style={styles.emptyPage}>
+          <Text variant="h1" accessibilityRole="header">
+            {t('library.title')}
+          </Text>
+          <View style={styles.emptyBody}>
+            <ErrorText message={t('library.loadFailed')} />
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Avoid flashing the list header before we know whether the shelf is empty.
   if (!all) return <SafeAreaView edges={['top']} style={styles.root} />;
@@ -82,7 +98,7 @@ export default function Library() {
               <View style={styles.emptyShelf} />
             </View>
             <View style={styles.emptyCopy}>
-              <Text variant="sheetTitle" style={styles.center}>
+              <Text variant="sheetTitle" style={styles.center} accessibilityRole="header">
                 {t('library.empty.title')}
               </Text>
               <Text variant="lead" style={styles.center}>
@@ -163,6 +179,11 @@ export default function Library() {
           )
         }
         ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
+        ListEmptyComponent={
+          <Text variant="body" style={styles.center}>
+            {t(filter === 'audio' ? 'library.noneOfType.audio' : 'library.noneOfType.ebook')}
+          </Text>
+        }
       />
     </SafeAreaView>
   );

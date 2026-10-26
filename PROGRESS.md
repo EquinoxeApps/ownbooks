@@ -1,6 +1,6 @@
 # OwnBooks: Progress
 
-Last updated: 2026-10-23
+Last updated: 2026-10-23 (Milestone 6 code)
 
 Source of truth for scope: [`docs/design/spec.md`](docs/design/spec.md), plus the
 interview decisions in the build plan (summarised in "Decisions" below).
@@ -28,7 +28,7 @@ testing track and on TestFlight.
 | 3 | Full audio | ✅ MVP items done on Android (deferred items listed under "After the MVP") |
 | 4 | Ebooks | ✅ Done on Android (DRM / damaged-file import still to try on a device) |
 | 5 | Sync | ✅ Done on Android (web deletion page moved to 6; activity sync after the MVP) |
-| 6 | Analytics, polish, release prep | ⬜ Not started |
+| 6 | Analytics, polish, release prep | 🟡 Code written (not yet on a device); store setup in progress |
 
 ## Infrastructure
 
@@ -354,11 +354,40 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
 
 ## Milestone 6: Analytics, polish, release prep ⬜
 
-- [ ] Consent screen (equal-weight Accept/Decline) + Settings toggle
-- [ ] Firebase Analytics (consent mode defaults to denied, ad ID off) + Crashlytics, both consent-gated
-- [ ] Event wrapper that rejects any book data; events from the spec + onboarding property
-- [ ] Storage screen (per book + total)
-- [ ] Empty and error states, accessibility pass (VoiceOver / TalkBack)
+Code written 2026-10-23 (lint, typecheck, 186 unit tests green; not yet in a build):
+- [x] Consent screen (`src/app/(app)/consent.tsx`): asked once per account after sign-in (after any
+      account-switch prompt), "Don't share" and "Share" as two identical buttons side by side, privacy
+      policy link. "Share anonymous usage" toggle in Profile → Settings changes the same choice.
+      The choice is stored per account (`user.<id>.analytics.consent`)
+- [x] Firebase Analytics + Crashlytics (`@react-native-firebase/*` 27): `firebase.json` turns every
+      default off (analytics and Crashlytics collection, all consent-mode types, advertising ID, SSAID,
+      IDFV, automatic screen reporting, ad-network registration); iOS built without Ad ID support;
+      `useFrameworks: 'dynamic'` on iOS (Firebase's Apple SDK is SPM-only). Plugins are added only
+      when both config files exist; the files are EAS file variables `GOOGLE_SERVICES_JSON` /
+      `GOOGLE_SERVICE_INFO_PLIST` (all three environments) and gitignored locally
+- [x] `src/features/analytics`: the only code that touches Firebase. `track()` takes the spec's
+      events only, each parameter a fixed list of values or a bounded whole number; anything else
+      drops the event. Events wait in memory until the account answers (so the sign-in itself is
+      counted after a yes), are dropped after a no; a no or a withdrawal also resets the Analytics
+      data and deletes unsent crash reports. Onboarding answer as the `bring_first` user property.
+      Events: sign_up / login (method), import_started / completed (type, format, size bucket, track
+      count) / failed (reason), playback_started, playback_session (duration bucket; a pause under 5 s
+      such as a file boundary continues the session), reader_opened, book_finished, sync_conflict_shown,
+      account_deleted. Unit tests check that book data is refused and nothing is sent before a yes
+- [x] Storage screen (`src/app/(app)/storage.tsx`, Profile → Storage "N books on this phone"):
+      total, free space, books largest first; a row opens book detail (to delete)
+- [x] Accessibility / error-state pass (code review, not yet tried with TalkBack or VoiceOver):
+      errors are announced on iOS too (`useAnnounce`; VoiceOver has no live regions); the reader shows
+      Previous / Next page buttons while a screen reader is on (swipes and taps don't reach the page);
+      the player shows a loading or error state instead of an empty screen; opening a book never fails
+      silently (a failed sync check just opens it); error states for the library, book detail actions,
+      storage, reader and conflict sheet; a library filter with no books says so; live regions for
+      import progress and sync status
+- [ ] Device checks: consent screen once per account; toggle off / on; DebugView shows events only
+      after a yes and none of them carries book data; no Firebase requests after a no (spec §8);
+      Storage numbers; TalkBack and VoiceOver through sign-in, library, player and reader
+- [ ] Google Analytics linked to the Firebase project `ownbooksapp` (check Project settings →
+      Integrations; events need a GA4 property)
 - [x] GitHub Pages `/site`: privacy policy, terms, account deletion page (sign in, then call the
       already deployed `delete-account` Edge Function)
   - [x] Pages written (2026-10-23): `site/privacy`, `site/terms`, `site/delete-account` (email +
@@ -376,7 +405,10 @@ rest of `/site`: the web account-deletion page (needed for the Play listing).
         auth, identity, device, book, progress or activity rows left
   - [ ] Later: password reset by code on the deletion page (today: reset in the app, or the email
         fallback)
-- [ ] Production email sender in Supabase (e.g. Resend)
+- [ ] Production email sender in Supabase: Resend, sending domain `mail.equinoxe.app` (a subdomain,
+      so the root domain's Google Workspace mail records stay as they are; DNS on Cloudflare).
+      Resend MCP added for this project (local scope, OAuth) on 2026-10-23; waiting on its login
+- [ ] App Store Connect app record (bundle ID `app.equinoxe.ownbooks`, SKU `ownbooks-ios`)
 - [x] Publisher and app ID decided (2026-10-23): AB Equinoxe Marketing Oy as "Equinoxe Apps",
       `app.equinoxe.ownbooks`; the app config default switched
 - [ ] Move to `app.equinoxe.ownbooks` before the first upload:

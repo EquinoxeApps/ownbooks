@@ -36,7 +36,7 @@ export default function BookDetail() {
   const { t, i18n } = useTranslation();
   const db = useDb();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: book } = useLiveQuery((db) => getLibraryItem(db, id), ['books', 'progress'], id);
+  const { data: book, error: loadError } = useLiveQuery((db) => getLibraryItem(db, id), ['books', 'progress'], id);
 
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState('');
@@ -45,13 +45,14 @@ export default function BookDetail() {
   const [confirming, setConfirming] = useState<'phone' | 'everywhere' | null>(null);
   const userId = useAuthStore((s) => s.account?.id ?? '');
   const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  if (book === undefined) return <Screen>{null}</Screen>;
-  if (book === null) {
+  if (book === undefined && !loadError) return <Screen>{null}</Screen>;
+  if (!book) {
     return (
       <Screen>
         <BackHeader />
-        <Text variant="lead">{t('book.notFound')}</Text>
+        {loadError ? <ErrorText message={t('book.loadFailed')} /> : <Text variant="lead">{t('book.notFound')}</Text>}
       </Screen>
     );
   }
@@ -82,8 +83,12 @@ export default function BookDetail() {
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
+    setActionError(null);
     try {
       await action();
+    } catch (error) {
+      console.warn('Book action failed', error);
+      setActionError(t('book.actionFailed'));
     } finally {
       setBusy(false);
     }
@@ -171,6 +176,8 @@ export default function BookDetail() {
         </Card>
       )}
 
+      {actionError ? <ErrorText message={actionError} /> : null}
+
       {editing ? (
         <View style={styles.fields}>
           <TextField
@@ -181,8 +188,8 @@ export default function BookDetail() {
               setTitleError(false);
             }}
             autoCapitalize="words"
+            error={titleError ? t('book.titleRequired') : null}
           />
-          {titleError ? <ErrorText message={t('book.titleRequired')} /> : null}
           <TextField
             label={t('import.authorLabel')}
             value={author}

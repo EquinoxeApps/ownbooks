@@ -1,6 +1,7 @@
 import { FunctionsFetchError } from '@supabase/supabase-js';
 
 import type { Db } from '@/db/types';
+import { track } from '@/features/analytics';
 import { unload as unloadPlayer } from '@/features/player/controller';
 import { stopSync } from '@/features/sync/service';
 import { supabase } from '@/lib/supabase';
@@ -20,6 +21,7 @@ export async function deleteAccount(db: Db, userId: string): Promise<void> {
   if (error) {
     throw new AuthFlowError(error instanceof FunctionsFetchError ? 'errors.offline' : 'errors.generic', error);
   }
+  track('account_deleted');
   stopSync();
   await unloadPlayer();
   await removeLocalDataFor(db, [userId]);

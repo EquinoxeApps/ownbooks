@@ -3,10 +3,12 @@ import { openBrowserAsync } from 'expo-web-browser';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { useDb, useLiveQuery } from '@/db/provider';
+import { listStorage } from '@/db/repositories/books';
 import { countUnsynced } from '@/db/repositories/sync';
+import { analyticsAvailable, setAnalyticsConsent, useAnalyticsStore } from '@/features/analytics';
 import { displayName } from '@/features/auth/account';
 import { signOutRemote } from '@/features/auth/providers';
 import { useAuthStore } from '@/features/auth/store';
@@ -48,7 +50,11 @@ export default function Profile() {
       </Text>
 
       <Card style={styles.accountCard}>
-        <View style={styles.avatar} accessible={false}>
+        <View
+          style={styles.avatar}
+          accessible={false}
+          importantForAccessibility="no-hide-descendants"
+          accessibilityElementsHidden>
           <Text style={styles.avatarLetter} color={colors.white}>
             {name.charAt(0).toUpperCase()}
           </Text>
@@ -68,6 +74,8 @@ export default function Profile() {
           {t('profile.settings')}
         </Text>
         <Card padding={0} style={styles.list}>
+          {analyticsAvailable() ? <AnalyticsRow /> : null}
+          <StorageRow userId={account.id} />
           <LinkRow label={t('profile.privacy')} onPress={() => openBrowserAsync(`${env.legalBaseUrl}/privacy`)} divider />
           <LinkRow label={t('profile.terms')} onPress={() => openBrowserAsync(`${env.legalBaseUrl}/terms`)} />
         </Card>
@@ -135,7 +143,10 @@ function SyncSection({ userId }: { userId: string }) {
         <Text variant="h2" accessibilityRole="header">
           {t('profile.sync.title')}
         </Text>
-        <Text style={styles.syncState} color={state === 'error' ? colors.danger : colors.primaryDark}>
+        <Text
+          style={styles.syncState}
+          color={state === 'error' ? colors.danger : colors.primaryDark}
+          accessibilityLiveRegion="polite">
           {t(`profile.sync.states.${state}`)}
         </Text>
       </View>
@@ -155,6 +166,50 @@ function SyncSection({ userId }: { userId: string }) {
       </Card>
       <Text variant="caption">{t('profile.sync.note')}</Text>
     </View>
+  );
+}
+
+/** The consent toggle (spec §4.8): the same choice as the consent screen, changeable any time. */
+function AnalyticsRow() {
+  const { t } = useTranslation();
+  const granted = useAnalyticsStore((s) => s.consent === 'granted');
+  return (
+    <View style={[styles.row, styles.divider]}>
+      <View style={styles.rowText}>
+        <Text variant="bodyStrong">{t('profile.analytics')}</Text>
+        <Text variant="caption">{t('profile.analyticsHint')}</Text>
+      </View>
+      <Switch
+        accessibilityLabel={t('profile.analytics')}
+        accessibilityHint={t('profile.analyticsHint')}
+        value={granted}
+        onValueChange={(on) => void setAnalyticsConsent(on)}
+        trackColor={{ true: colors.primary, false: colors.border }}
+        thumbColor={colors.white}
+      />
+    </View>
+  );
+}
+
+function StorageRow({ userId }: { userId: string }) {
+  const { t } = useTranslation();
+  const { data: books } = useLiveQuery((db) => listStorage(db, userId), ['books'], userId);
+  const summary = books ? t('profile.storageSummary', { count: books.length }) : '';
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={summary ? `${t('profile.storage')}, ${summary}` : t('profile.storage')}
+      onPress={() => router.push('/storage')}>
+      {({ pressed }) => (
+        <View style={[styles.row, styles.divider, pressed && styles.pressed]}>
+          <Text variant="bodyStrong">{t('profile.storage')}</Text>
+          <View style={styles.rowValue}>
+            <Text variant="meta">{summary}</Text>
+            <Icon name="chevronRight" size={18} color={colors.muted} strokeWidth={2.4} />
+          </View>
+        </View>
+      )}
+    </Pressable>
   );
 }
 
@@ -190,7 +245,9 @@ const styles = StyleSheet.create({
   syncState: { fontFamily: fonts.bold, fontSize: 15 },
   accountLinks: { flexDirection: 'row', justifyContent: 'center', gap: 28 },
   list: { paddingHorizontal: 18, paddingVertical: 4 },
-  row: { minHeight: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  row: { minHeight: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  rowText: { flex: 1, gap: 2, paddingVertical: 10 },
+  rowValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   divider: { borderBottomWidth: 2, borderBottomColor: colors.divider },
   pressed: { opacity: 0.6 },
   signOut: { alignItems: 'center', gap: 4 },

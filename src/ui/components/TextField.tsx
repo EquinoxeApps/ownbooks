@@ -1,6 +1,7 @@
 import { forwardRef, useState } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
+import { useAnnounce } from '../announce';
 import { colors, fonts, radius } from '../tokens';
 import { Text } from './Text';
 
@@ -42,6 +43,7 @@ export const TextField = forwardRef<TextInput, TextFieldProps>(function TextFiel
 });
 
 export function ErrorText({ message }: { message: string }) {
+  useAnnounce(message);
   return (
     <Text
       variant="meta"

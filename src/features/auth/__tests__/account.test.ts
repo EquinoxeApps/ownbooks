@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 
-import { accountFromUser, displayName } from '../account';
+import { accountFromUser, displayName, isNewUser } from '../account';
 
 const user = (overrides: Partial<User>): User =>
   ({
@@ -55,5 +55,14 @@ describe('displayName', () => {
     expect(displayName({ id: '1', email: 'reader@x.io', name: 'Ada', provider: 'email' })).toBe('Ada');
     expect(displayName({ id: '1', email: 'reader@x.io', name: null, provider: 'email' })).toBe('reader');
     expect(displayName({ id: '1', email: null, name: null, provider: 'apple' })).toBe('Reader');
+  });
+});
+
+describe('isNewUser', () => {
+  const now = Date.parse('2026-10-23T12:00:00Z');
+  it('counts an account created in the last few minutes as new', () => {
+    expect(isNewUser({ created_at: '2026-10-23T11:58:00Z' }, now)).toBe(true);
+    expect(isNewUser({ created_at: '2026-10-22T12:00:00Z' }, now)).toBe(false);
+    expect(isNewUser({ created_at: '' }, now)).toBe(false);
   });
 });

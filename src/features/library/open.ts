@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 
 import type { BookType, Db } from '@/db/types';
 import { loadBook, play } from '@/features/player/controller';
+import { usePlayerStore } from '@/features/player/store';
 import { findConflict } from '@/features/sync/conflict';
 import { syncBeforeOpen } from '@/features/sync/service';
 
@@ -21,8 +22,7 @@ export async function openBook(db: Db, book: Openable, opts: { autoplay?: boolea
   if (opening) return;
   opening = true;
   try {
-    await syncBeforeOpen();
-    if (await findConflict(db, book.id)) {
+    if (await newerElsewhere(db, book.id)) {
       router.push({ pathname: '/conflict', params: { id: book.id, autoplay: opts.autoplay ? '1' : '0' } });
       return;
     }
@@ -34,6 +34,17 @@ export async function openBook(db: Db, book: Openable, opts: { autoplay?: boolea
 
 let opening = false;
 
+/** Whether to offer another device's newer position. A failed check never stops the book opening. */
+async function newerElsewhere(db: Db, bookId: string): Promise<boolean> {
+  try {
+    await syncBeforeOpen();
+    return Boolean(await findConflict(db, bookId));
+  } catch (error) {
+    console.warn('Checking for a newer position failed', error);
+    return false;
+  }
+}
+
 /**
  * Play on a loaded, paused book (the mini-player): like opening it, a newer position from
  * another device is offered first, so resuming here can't overwrite it unasked.
@@ -42,8 +53,7 @@ export async function resumeBook(db: Db, bookId: string): Promise<void> {
   if (opening) return;
   opening = true;
   try {
-    await syncBeforeOpen();
-    if (await findConflict(db, bookId)) {
+    if (await newerElsewhere(db, bookId)) {
       router.push({ pathname: '/conflict', params: { id: bookId, autoplay: '1' } });
       return;
     }
@@ -61,5 +71,8 @@ export function goToBook(db: Db, book: Openable, opts: { autoplay?: boolean; rep
     return;
   }
   navigate('/player');
-  void loadBook(db, book.id, { autoplay: opts.autoplay });
+  loadBook(db, book.id, { autoplay: opts.autoplay }).catch((error: unknown) => {
+    console.warn('Loading the book failed', error);
+    usePlayerStore.setState({ error: 'unplayable' });
+  });
 }

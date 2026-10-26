@@ -12,6 +12,7 @@ import { listChapters } from '@/db/repositories/chapters';
 import { getProgress, saveAudioPosition } from '@/db/repositories/progress';
 import { listTracks } from '@/db/repositories/tracks';
 import type { Db } from '@/db/types';
+import { track } from '@/features/analytics';
 import { fileUri } from '@/lib/files';
 
 import { buildChapters, chapterAt, nextChapterStart, previousChapterStart } from './chapters';
@@ -96,7 +97,11 @@ export async function loadBook(database: Db, bookId: string, opts: { autoplay?: 
     listChapters(database, bookId),
     getProgress(database, bookId),
   ]);
-  if (!book || trackRows.length === 0) return;
+  // Nothing to play: the player screen shows why instead of an empty page.
+  if (!book || trackRows.length === 0) {
+    set({ error: book ? 'missingFile' : 'unplayable' });
+    return;
+  }
 
   // Stored paths are relative: the documents dir moves between iOS installs.
   const tracks: PlayerTrack[] = trackRows.map((t) => ({
@@ -256,7 +261,10 @@ async function advanceTrack() {
     await savePosition();
     // Playing to the end counts as finishing the book.
     const { bookId } = get();
-    if (db && bookId) await setFinished(db, bookId, true, Date.now());
+    if (db && bookId) {
+      await setFinished(db, bookId, true, Date.now());
+      track('book_finished', { type: 'audio' });
+    }
     return;
   }
   // An end-of-chapter timer whose chapter ends with this file stops at the next file's start.

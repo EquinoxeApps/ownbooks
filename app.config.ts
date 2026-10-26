@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 // Everything project-specific comes from the environment so forks can point the
@@ -7,6 +9,13 @@ const GOOGLE_IOS_URL_SCHEME = process.env.GOOGLE_IOS_URL_SCHEME;
 // Facebook App ID and client token are public values (Meta for Developers → Settings).
 const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
 const FACEBOOK_CLIENT_TOKEN = process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN;
+// Firebase config files (Firebase console → Project settings → Your apps). EAS builds get them from
+// the GOOGLE_SERVICES_JSON / GOOGLE_SERVICE_INFO_PLIST file variables; locally they sit in the repo
+// root (gitignored). Analytics and crash reports are left out of the app without both.
+const localFile = (name: string) => (existsSync(name) ? `./${name}` : undefined);
+const GOOGLE_SERVICES_JSON = process.env.GOOGLE_SERVICES_JSON || localFile('google-services.json');
+const GOOGLE_SERVICE_INFO_PLIST = process.env.GOOGLE_SERVICE_INFO_PLIST || localFile('GoogleService-Info.plist');
+const FIREBASE = Boolean(GOOGLE_SERVICES_JSON && GOOGLE_SERVICE_INFO_PLIST);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -21,6 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   backgroundColor: '#F7F9F6',
   ios: {
     bundleIdentifier: BUNDLE_ID,
+    ...(FIREBASE ? { googleServicesFile: GOOGLE_SERVICE_INFO_PLIST } : null),
     supportsTablet: false,
     usesAppleSignIn: true,
     infoPlist: {
@@ -29,6 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: BUNDLE_ID,
+    ...(FIREBASE ? { googleServicesFile: GOOGLE_SERVICES_JSON } : null),
     adaptiveIcon: {
       backgroundColor: '#DFF5EC',
       foregroundImage: './assets/images/android-icon-foreground.png',
@@ -78,8 +89,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-build-properties',
       {
         android: { minSdkVersion: 29 },
+        // The Firebase Apple SDK comes through Swift Package Manager, which needs dynamic frameworks.
+        ...(FIREBASE ? { ios: { useFrameworks: 'dynamic' } } : null),
       },
     ],
+    // Analytics and Crashlytics, both off until the user agrees (firebase.json sets every
+    // collection default to off; src/features/analytics turns them on).
+    ...(FIREBASE
+      ? [
+          '@react-native-firebase/app',
+          ['@react-native-firebase/analytics', { ios: { withoutAdIdSupport: true } }] as [
+            string,
+            Record<string, unknown>,
+          ],
+          '@react-native-firebase/crashlytics',
+        ]
+      : []),
     // The Google Sign-In plugin refuses to run without an iOS URL scheme, so it
     // is only added once one is configured.
     ...(GOOGLE_IOS_URL_SCHEME
@@ -117,6 +142,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // Forks: set EAS_OWNER / EAS_PROJECT_ID (from `npx eas-cli init`) to use your own project.
   owner: process.env.EAS_OWNER || 'equinoxe-apps',
   extra: {
+    /** Read by src/features/analytics: without Firebase there's nothing to ask consent for. */
+    analytics: FIREBASE,
     eas: { projectId: process.env.EAS_PROJECT_ID || '53b114f3-80af-48cd-8934-f5d0cb74b495' },
   },
 });
